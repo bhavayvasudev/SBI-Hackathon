@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Copy, BarChart3, Download, Smartphone, Sparkles, Zap } from 'lucide-react';
@@ -72,6 +73,10 @@ export default function Success() {
   const navigate = useNavigate();
   const accountData = location.state?.accountData;
 
+  useEffect(() => {
+    sessionStorage.setItem('hyperone_auth', '1');
+  }, []);
+
   const mockData = {
     accountNumber: '3' + Math.floor(Math.random() * 9e10 + 1e10).toString().slice(0, 10),
     customerId: 'SBIH' + Math.floor(Math.random() * 9e5 + 1e5),
@@ -95,6 +100,19 @@ export default function Success() {
       </div>
 
       <div className="relative z-10 max-w-lg w-full space-y-5">
+
+        {/* ── Logo nav ────────────────────────────────── */}
+        <div className="flex justify-center mb-2">
+          <button
+            onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="flex items-center gap-2 opacity-40 hover:opacity-70 transition-opacity"
+          >
+            <div className="w-6 h-6 rounded-[7px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+              <Zap className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-white text-sm font-bold tracking-tight">HyperOne</span>
+          </button>
+        </div>
 
         {/* ── Success header ──────────────────────────── */}
         <motion.div
@@ -254,7 +272,7 @@ export default function Success() {
           transition={{ delay: 0.68 }}
           className="text-center text-xs text-white/25 pb-2"
         >
-          Welcome aboard! Download YONO to start banking immediately.
+          Welcome aboard · Built for SBI HackFest 2026
         </motion.p>
       </div>
     </div>

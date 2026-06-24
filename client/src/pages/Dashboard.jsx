@@ -108,17 +108,20 @@ export default function Dashboard() {
             >
               <ArrowLeft className="w-4 h-4" />
             </motion.button>
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              className="flex items-center gap-3 hover:opacity-75 transition-opacity"
+            >
               <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
                 style={{ boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
               >
                 <Zap className="w-4 h-4 text-white" />
               </div>
-              <div>
+              <div className="text-left">
                 <h1 className="text-sm font-bold text-white">HyperOne Analytics</h1>
-                <p className="text-[11px] text-white/40">Real-time onboarding intelligence</p>
+                <p className="text-[11px] text-white/40">SBI HackFest 2026 · Live Intelligence</p>
               </div>
-            </div>
+            </button>
           </div>
 
           <div className="flex items-center gap-2.5 glass rounded-full px-4 py-2">

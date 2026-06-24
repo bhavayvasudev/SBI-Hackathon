@@ -1,369 +1,395 @@
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Zap, Shield, BarChart3, Brain, Users, Clock, Sparkles, ChevronRight } from 'lucide-react';
-import Button from '../components/ui/Button.jsx';
+import { ArrowRight, Zap, Shield, BarChart3, Brain, Sparkles, ChevronRight } from 'lucide-react';
 
 const stats = [
-  { value: '90%', label: 'Faster Onboarding', icon: Clock, color: 'indigo' },
-  { value: '6×', label: 'More Lead Capture', icon: Users, color: 'purple' },
-  { value: '94M+', label: 'YONO Users Reachable', icon: BarChart3, color: 'emerald' },
-  { value: '₹1–3B', label: 'Addressable Market', icon: Zap, color: 'amber' },
+  { value: '90%',  label: 'Faster Onboarding' },
+  { value: '6×',   label: 'More Lead Capture' },
+  { value: '94M+', label: 'YONO Users Reachable' },
+  { value: '₹1–3B',label: 'Addressable Market' },
 ];
 
 const features = [
   {
     icon: Brain,
     title: 'Hyper-Personalised AI',
-    description: 'Claude-powered conversational engine that adapts to each customer\'s unique financial profile in real time.',
-    gradient: 'from-indigo-500/20 to-purple-500/10',
-    border: 'border-indigo-500/20',
-    iconBg: 'bg-indigo-500/15',
-    iconColor: 'text-indigo-400',
-    glow: 'rgba(99,102,241,0.12)',
+    description: "Conversational engine that adapts to each customer's unique financial profile — in real time, at scale.",
+    accent: '#5046e4',
+    bg: 'rgba(80,70,228,0.07)',
+    border: 'rgba(80,70,228,0.14)',
   },
   {
     icon: Shield,
     title: 'Instant Digital KYC',
-    description: 'OCR-based document verification with Aadhaar & PAN validation — onboard customers in minutes, not days.',
-    gradient: 'from-emerald-500/20 to-teal-500/10',
-    border: 'border-emerald-500/20',
-    iconBg: 'bg-emerald-500/15',
-    iconColor: 'text-emerald-400',
-    glow: 'rgba(16,185,129,0.1)',
+    description: 'OCR-based Aadhaar & PAN verification. Onboard customers in minutes — no branch visit, no paperwork.',
+    accent: '#059669',
+    bg: 'rgba(5,150,105,0.07)',
+    border: 'rgba(5,150,105,0.14)',
   },
   {
     icon: BarChart3,
-    title: 'Live Analytics',
-    description: 'Real-time insights on conversions, customer segments, product recommendations and onboarding metrics.',
-    gradient: 'from-purple-500/20 to-pink-500/10',
-    border: 'border-purple-500/20',
-    iconBg: 'bg-purple-500/15',
-    iconColor: 'text-purple-400',
-    glow: 'rgba(168,85,247,0.1)',
+    title: 'Live Analytics Dashboard',
+    description: 'Real-time insights on conversions, customer segments, product recommendations and onboarding velocity.',
+    accent: '#7c3aed',
+    bg: 'rgba(124,58,237,0.07)',
+    border: 'rgba(124,58,237,0.14)',
   },
 ];
 
 const steps = [
-  { num: '01', label: 'Chat with AI', desc: 'Share your financial goals naturally' },
-  { num: '02', label: 'Get Matched', desc: 'Receive a personalised product bundle' },
-  { num: '03', label: 'Verify Identity', desc: 'Upload KYC docs in 2 minutes' },
-  { num: '04', label: 'Bank Instantly', desc: 'Account ready, no branch visit needed' },
+  { num: '01', label: 'Chat with AI',     desc: 'Share your financial goals naturally in a conversation' },
+  { num: '02', label: 'Get Matched',      desc: 'Receive a personalised banking product bundle' },
+  { num: '03', label: 'Verify Identity',  desc: 'Upload KYC docs — done in under 2 minutes' },
+  { num: '04', label: 'Bank Instantly',   desc: 'Account ready. No branch visit needed' },
 ];
-
-const spring = { type: 'spring', stiffness: 260, damping: 28 };
 
 export default function Landing() {
   const navigate = useNavigate();
+  const featuresRef = useRef(null);
+  const howItWorksRef = useRef(null);
+
+  const handleLogoClick = () => {
+    navigate('/');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <div className="min-h-screen bg-[#060609] relative overflow-x-hidden">
+    <div className="min-h-screen" style={{ background: '#f5f5f7', color: '#1d1d1f', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif' }}>
 
-      {/* ── Background mesh ─────────────────────────── */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="orb w-[700px] h-[700px] bg-indigo-600" style={{ top: '-200px', left: '-150px' }} />
-        <div className="orb w-[500px] h-[500px] bg-purple-700" style={{ top: '25%', right: '-100px' }} />
-        <div className="orb w-[400px] h-[400px] bg-pink-700" style={{ bottom: '10%', left: '15%' }} />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              'radial-gradient(at 20% 80%, rgba(99,102,241,0.07) 0%, transparent 55%), ' +
-              'radial-gradient(at 80% 20%, rgba(168,85,247,0.06) 0%, transparent 50%)',
-          }}
-        />
-      </div>
-
-      {/* ── Floating Navigation ─────────────────────── */}
+      {/* ── Sticky Navigation ──────────────────────── */}
       <motion.nav
-        initial={{ opacity: 0, y: -16 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative z-50 flex items-center justify-between px-6 md:px-10 py-5 max-w-7xl mx-auto"
+        transition={{ duration: 0.4 }}
+        className="sticky top-0 z-50"
+        style={{
+          background: 'rgba(255,255,255,0.88)',
+          backdropFilter: 'blur(24px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+          borderBottom: '1px solid rgba(0,0,0,0.07)',
+        }}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-white font-bold text-[1.15rem] tracking-tight">HyperOne</span>
-        </div>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
 
-        <div className="hidden md:flex items-center gap-1 glass rounded-full px-2 py-2">
-          {['Features', 'How it works', 'Dashboard'].map((item, i) => (
-            <button
-              key={item}
-              onClick={() => item === 'Dashboard' && navigate('/dashboard')}
-              className="text-sm text-white/55 hover:text-white/90 transition-colors px-4 py-1.5 rounded-full hover:bg-white/[0.07]"
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-3">
+          {/* Logo — clickable */}
           <button
-            onClick={() => navigate('/dashboard')}
-            className="hidden sm:block text-sm text-white/50 hover:text-white transition-colors"
+            onClick={handleLogoClick}
+            className="flex items-center gap-2.5 transition-opacity hover:opacity-70"
           >
-            Dashboard
+            <div className="w-8 h-8 rounded-[9px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5046e4, #7c3aed)' }}>
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-[1.05rem] tracking-tight" style={{ color: '#1d1d1f' }}>HyperOne</span>
           </button>
+
+          {/* Centre links */}
+          <div className="hidden md:flex items-center gap-0.5">
+            {[
+              { label: 'Features',     action: () => featuresRef.current?.scrollIntoView({ behavior: 'smooth' }) },
+              { label: 'How It Works', action: () => howItWorksRef.current?.scrollIntoView({ behavior: 'smooth' }) },
+              { label: 'Dashboard',    action: () => navigate('/dashboard') },
+            ].map(item => (
+              <button
+                key={item.label}
+                onClick={item.action}
+                className="text-[0.88rem] px-4 py-2 rounded-full transition-all"
+                style={{ color: '#6e6e73' }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#1d1d1f'; e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = '#6e6e73'; e.currentTarget.style.background = 'transparent'; }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* CTA */}
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate('/chat')}
-            className="btn-primary text-sm py-2.5 px-5"
+            className="flex items-center gap-1.5 text-[0.88rem] font-semibold text-white px-5 py-2.5 rounded-full"
+            style={{ background: '#1d1d1f', boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
           >
             Get Started
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </motion.button>
         </div>
       </motion.nav>
 
       {/* ── Hero ────────────────────────────────────── */}
-      <section className="relative z-10 text-center px-6 pt-20 pb-28 max-w-5xl mx-auto">
+      <section className="relative overflow-hidden">
+        {/* Subtle gradient accent */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 80% 55% at 50% -5%, rgba(80,70,228,0.09) 0%, transparent 70%)' }}
+        />
 
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ ...spring, delay: 0.1 }}
-          className="inline-flex items-center gap-2.5 glass-strong rounded-full px-5 py-2.5 mb-10"
-        >
-          <span className="flex relative">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-pulse-ring" />
-          </span>
-          <span className="text-xs font-medium text-white/70 tracking-wide">
-            AI-Powered Banking Onboarding · SBI HackFest 2024
-          </span>
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-        </motion.div>
+        <div className="relative max-w-5xl mx-auto px-6 pt-24 pb-28 text-center">
 
-        {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 28 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="text-[3.2rem] md:text-[5.5rem] font-bold leading-[1.08] tracking-[-0.03em] mb-7"
-        >
-          Banking Onboarding,
-          <br />
-          <span className="gradient-text">Reinvented.</span>
-        </motion.h1>
-
-        {/* Sub */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.28 }}
-          className="text-lg md:text-xl text-white/45 max-w-2xl mx-auto mb-12 leading-relaxed font-light"
-        >
-          HyperOne uses conversational AI to acquire, qualify, and onboard bank customers
-          with hyper-personalised journeys — in minutes, not days.
-        </motion.p>
-
-        {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-        >
-          <motion.button
-            whileHover={{ scale: 1.04, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/chat')}
-            className="btn-primary text-base px-8 py-4 group"
+          {/* Badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full text-[0.78rem] font-medium tracking-wide"
+            style={{ background: 'rgba(80,70,228,0.08)', color: '#5046e4', border: '1px solid rgba(80,70,228,0.18)' }}
           >
-            Start Your Journey
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.03, y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/dashboard')}
-            className="btn-glass text-base px-8 py-4"
-          >
-            View Analytics
-          </motion.button>
-        </motion.div>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#5046e4] animate-pulse flex-shrink-0" />
+            AI-Powered Banking Onboarding · SBI HackFest 2026
+            <Sparkles className="w-3 h-3 flex-shrink-0" />
+          </motion.div>
 
-        {/* Trust line */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="text-xs text-white/25 mt-8 tracking-wide"
-        >
-          Powered by Claude AI · Bank-grade security · Zero data storage
-        </motion.p>
+          {/* Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.08, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="font-bold leading-[1.04] tracking-[-0.035em] mb-7"
+            style={{ fontSize: 'clamp(2.8rem, 8vw, 5.5rem)', color: '#1d1d1f' }}
+          >
+            Banking Onboarding,
+            <br />
+            <span style={{
+              background: 'linear-gradient(135deg, #5046e4 0%, #7c3aed 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}>
+              Reinvented.
+            </span>
+          </motion.h1>
+
+          {/* Subheadline */}
+          <motion.p
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed"
+            style={{ color: '#6e6e73' }}
+          >
+            HyperOne uses conversational AI to acquire, qualify, and onboard bank customers
+            with hyper-personalised journeys — in minutes, not days.
+          </motion.p>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.32 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+          >
+            <motion.button
+              whileHover={{ scale: 1.03, y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/chat')}
+              className="inline-flex items-center gap-2.5 font-semibold text-white text-base px-9 py-4 rounded-full group"
+              style={{ background: '#1d1d1f', boxShadow: '0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1)' }}
+            >
+              Start Your Journey
+              <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/dashboard')}
+              className="inline-flex items-center gap-2 font-medium text-base px-9 py-4 rounded-full"
+              style={{ color: '#1d1d1f', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)' }}
+            >
+              View Analytics
+            </motion.button>
+          </motion.div>
+        </div>
       </section>
 
-      {/* ── Stats Row ───────────────────────────────── */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-        className="relative z-10 max-w-5xl mx-auto px-6 mb-28"
-      >
-        <div className="glass-card rounded-3xl p-8 md:p-10 gradient-border">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <motion.div
-                  key={s.label}
-                  initial={{ opacity: 0, scale: 0.88 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ ...spring, delay: 0.6 + i * 0.08 }}
-                  className="text-center group"
-                >
-                  <p className="text-3xl md:text-4xl font-bold gradient-text tracking-tight">{s.value}</p>
-                  <p className="text-sm text-white/45 mt-1.5 font-medium">{s.label}</p>
-                </motion.div>
-              );
-            })}
+      {/* ── Stats — dark contrast section ───────────── */}
+      <section style={{ background: '#1d1d1f' }}>
+        <div className="max-w-5xl mx-auto px-6 py-20 md:py-24">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-14">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.07 }}
+                className="text-center"
+              >
+                <p className="font-bold text-white tracking-tight mb-2" style={{ fontSize: 'clamp(2rem, 5vw, 3.25rem)' }}>
+                  {s.value}
+                </p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.42)' }}>{s.label}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* ── Features ────────────────────────────────── */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 pb-28">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65, duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <p className="text-xs font-semibold text-indigo-400 uppercase tracking-[0.2em] mb-4">
+      {/* ── Features ─────────────────────────────────── */}
+      <section ref={featuresRef} id="features" className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+        <div className="text-center mb-16">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-xs font-semibold uppercase tracking-[0.22em] mb-4"
+            style={{ color: '#5046e4' }}
+          >
             Platform Features
-          </p>
-          <h2 className="text-3xl md:text-[2.75rem] font-bold leading-tight tracking-tight mb-4">
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-3xl md:text-[2.75rem] font-bold tracking-tight mb-4"
+            style={{ color: '#1d1d1f' }}
+          >
             Everything banks need to grow
-          </h2>
-          <p className="text-white/45 max-w-xl mx-auto leading-relaxed">
-            From lead capture to account creation — one intelligent platform covers
-            the entire acquisition funnel.
-          </p>
-        </motion.div>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="max-w-xl mx-auto leading-relaxed"
+            style={{ color: '#6e6e73' }}
+          >
+            From lead capture to account creation — one intelligent platform
+            covers the entire acquisition funnel.
+          </motion.p>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
+        <div className="grid md:grid-cols-3 gap-6">
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
               <motion.div
                 key={f.title}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ ...spring, delay: 0.75 + i * 0.12 }}
-                whileHover={{ y: -4 }}
-                className={`relative glass-card rounded-2xl p-7 ${f.border} gradient-border cursor-default overflow-hidden`}
-                style={{
-                  boxShadow: `0 0 60px ${f.glow}, 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)`,
-                }}
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="rounded-2xl p-8 cursor-default"
+                style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 2px 24px rgba(0,0,0,0.06)' }}
               >
-                {/* Card bg gradient */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br ${f.gradient} opacity-60 pointer-events-none`}
-                />
-                <div className="relative z-10">
-                  <div className={`w-12 h-12 rounded-xl ${f.iconBg} border ${f.border} flex items-center justify-center mb-5`}>
-                    <Icon className={`w-6 h-6 ${f.iconColor}`} />
-                  </div>
-                  <h3 className="font-semibold text-white text-base mb-2.5 tracking-tight">{f.title}</h3>
-                  <p className="text-sm text-white/50 leading-relaxed">{f.description}</p>
+                  className="w-12 h-12 rounded-xl mb-6 flex items-center justify-center"
+                  style={{ background: f.bg, border: `1px solid ${f.border}` }}
+                >
+                  <Icon className="w-6 h-6" style={{ color: f.accent }} />
                 </div>
+                <h3 className="font-semibold text-base mb-2.5 tracking-tight" style={{ color: '#1d1d1f' }}>{f.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#6e6e73' }}>{f.description}</p>
               </motion.div>
             );
           })}
         </div>
       </section>
 
-      {/* ── How It Works ────────────────────────────── */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 pb-28">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="text-center mb-14"
-        >
-          <p className="text-xs font-semibold text-purple-400 uppercase tracking-[0.2em] mb-4">
-            How It Works
-          </p>
-          <h2 className="text-3xl md:text-[2.5rem] font-bold tracking-tight">
-            From hello to account in 4 steps
-          </h2>
-        </motion.div>
-
-        <div className="grid md:grid-cols-4 gap-4">
-          {steps.map((s, i) => (
-            <motion.div
-              key={s.num}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...spring, delay: 0.95 + i * 0.1 }}
-              className="glass-card rounded-2xl p-6 text-center relative overflow-hidden group cursor-default"
+      {/* ── How It Works ─────────────────────────────── */}
+      <section ref={howItWorksRef} id="how-it-works" style={{ background: '#fff' }} className="py-24 md:py-32">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="text-xs font-semibold uppercase tracking-[0.22em] mb-4"
+              style={{ color: '#7c3aed' }}
             >
-              <div className="text-3xl font-black gradient-text-subtle mb-3 tracking-tight">{s.num}</div>
-              <h4 className="text-sm font-semibold text-white mb-1.5">{s.label}</h4>
-              <p className="text-xs text-white/40 leading-relaxed">{s.desc}</p>
-              {i < steps.length - 1 && (
-                <div className="hidden md:block absolute -right-2 top-1/2 -translate-y-1/2 z-10">
-                  <ChevronRight className="w-4 h-4 text-white/20" />
-                </div>
-              )}
-            </motion.div>
-          ))}
+              How It Works
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-[2.5rem] font-bold tracking-tight"
+              style={{ color: '#1d1d1f' }}
+            >
+              From hello to account in 4 steps
+            </motion.h2>
+          </div>
+
+          <div className="relative">
+            {/* Connector line */}
+            <div
+              className="hidden md:block absolute h-px"
+              style={{ top: '28px', left: 'calc(12.5% + 28px)', right: 'calc(12.5% + 28px)', background: 'rgba(0,0,0,0.09)', zIndex: 0 }}
+            />
+            <div className="grid md:grid-cols-4 gap-8 md:gap-4">
+              {steps.map((s, i) => (
+                <motion.div
+                  key={s.num}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl mb-5 relative"
+                    style={{ background: 'rgba(80,70,228,0.07)', color: '#5046e4', border: '1px solid rgba(80,70,228,0.15)', zIndex: 1 }}
+                  >
+                    {s.num}
+                  </div>
+                  <h4 className="text-sm font-semibold mb-1.5" style={{ color: '#1d1d1f' }}>{s.label}</h4>
+                  <p className="text-xs leading-relaxed" style={{ color: '#6e6e73' }}>{s.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── CTA ─────────────────────────────────────── */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.1 }}
-        className="relative z-10 max-w-4xl mx-auto px-6 pb-28 text-center"
-      >
-        <div
-          className="glass-card rounded-3xl p-12 md:p-16 gradient-border relative overflow-hidden"
-          style={{
-            boxShadow: '0 0 100px rgba(99,102,241,0.12), 0 32px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
-          }}
+      {/* ── CTA ──────────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-6 py-24 md:py-32">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center rounded-3xl px-8 py-20 md:py-24"
+          style={{ background: '#1d1d1f', boxShadow: '0 40px 80px rgba(0,0,0,0.16)' }}
         >
-          {/* Glow orb inside CTA */}
-          <div className="orb w-[300px] h-[300px] bg-indigo-600" style={{ top: '-100px', left: '50%', transform: 'translateX(-50%)' }} />
-          <div className="relative z-10">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mx-auto mb-7 shadow-lg shadow-indigo-500/30">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-              Ready to experience the future of banking?
-            </h2>
-            <p className="text-white/45 mb-10 max-w-md mx-auto leading-relaxed">
-              Open your account in under 3 minutes with our AI assistant.
-            </p>
-            <motion.button
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/chat')}
-              className="btn-primary text-base px-9 py-4 group"
-            >
-              Begin Onboarding
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </motion.button>
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-8"
+            style={{ background: 'linear-gradient(135deg, #5046e4, #7c3aed)' }}
+          >
+            <Sparkles className="w-7 h-7 text-white" />
           </div>
-        </div>
-      </motion.section>
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+            Ready to experience the future of banking?
+          </h2>
+          <p className="mb-10 max-w-md mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.48)' }}>
+            Open your account in under 3 minutes with our AI assistant.
+            No branch visit, no paperwork.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate('/chat')}
+            className="inline-flex items-center gap-2.5 font-semibold text-base bg-white rounded-full px-9 py-4 group"
+            style={{ color: '#1d1d1f', boxShadow: '0 4px 28px rgba(0,0,0,0.28)' }}
+          >
+            Begin Onboarding
+            <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </motion.button>
+        </motion.div>
+      </section>
 
-      {/* ── Footer ──────────────────────────────────── */}
-      <footer className="relative z-10 border-t border-white/[0.05] py-8 px-6 text-center">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+      {/* ── Footer ───────────────────────────────────── */}
+      <footer className="py-10 px-6 text-center" style={{ borderTop: '1px solid rgba(0,0,0,0.07)', background: '#f5f5f7' }}>
+        <button
+          onClick={handleLogoClick}
+          className="inline-flex items-center gap-2 mb-3 mx-auto transition-opacity hover:opacity-70"
+        >
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5046e4, #7c3aed)' }}>
             <Zap className="w-3 h-3 text-white" />
           </div>
-          <span className="text-white/40 text-sm font-medium">HyperOne</span>
-        </div>
-        <p className="text-white/25 text-xs tracking-wide">
-          Built for SBI HackFest 2024 · Powered by Claude AI · © 2024
+          <span className="font-medium text-sm" style={{ color: '#6e6e73' }}>HyperOne</span>
+        </button>
+        <p className="text-xs tracking-wide" style={{ color: '#b2b2b7' }}>
+          Built for SBI HackFest 2026 · Bank-grade security · © 2026
         </p>
       </footer>
     </div>

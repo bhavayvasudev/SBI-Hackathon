@@ -162,14 +162,17 @@ export default function Chat() {
               <ArrowLeft className="w-4 h-4" />
             </motion.button>
 
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              className="flex items-center gap-3 hover:opacity-75 transition-opacity"
+            >
               <div
                 className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
                 style={{ boxShadow: '0 4px 16px rgba(99,102,241,0.35)' }}
               >
                 <Zap className="w-4 h-4 text-white" />
               </div>
-              <div>
+              <div className="text-left">
                 <p className="text-sm font-semibold text-white leading-tight">HyperOne AI</p>
                 <div className="flex items-center gap-1.5">
                   <span className="flex relative">
@@ -178,7 +181,7 @@ export default function Chat() {
                   <p className="text-[11px] text-white/40">Online · SBI Banking Assistant</p>
                 </div>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Right: Progress steps */}
@@ -381,7 +384,7 @@ export default function Chat() {
             </div>
           )}
           <p className="text-[11px] text-white/20 text-center mt-2.5 tracking-wide">
-            HyperOne AI · Powered by Claude Sonnet · End-to-end encrypted
+            HyperOne AI · SBI HackFest 2026 · End-to-end encrypted
           </p>
         </div>
       </motion.div>
