@@ -19,6 +19,19 @@ export default {
           200: 'rgba(255,255,255,0.12)',
         },
       },
+      /* Extended opacity scale — adds the values Tailwind omits by default */
+      opacity: {
+        12: '0.12',
+        15: '0.15',
+        18: '0.18',
+        22: '0.22',
+        35: '0.35',
+        45: '0.45',
+        55: '0.55',
+        65: '0.65',
+        85: '0.85',
+        88: '0.88',
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'glass-gradient': 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
@@ -54,10 +67,13 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'SF Pro Text', 'Inter', 'system-ui', 'sans-serif'],
       },
       backdropBlur: {
         xs: '2px',
+      },
+      borderRadius: {
+        '4xl': '2rem',
       },
     },
   },
