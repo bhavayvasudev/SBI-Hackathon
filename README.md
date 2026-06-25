@@ -402,13 +402,6 @@ GitHub: https://github.com/bhavayvasudev
 
 LinkedIn: https://www.linkedin.com/in/bhavayvasudev/
 
----
-
-## 📄 License
-
-MIT License
-
----
 
 ### Built with ❤️ for SBI Hackathon 2026
 
