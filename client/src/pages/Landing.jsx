@@ -1,7 +1,9 @@
-import { useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Zap, Shield, BarChart3, Brain, Sparkles, ChevronRight } from 'lucide-react';
+import { ArrowRight, Zap, Shield, BarChart3, Brain, Sparkles, ChevronRight, ChevronDown, Menu, X, Lock, User, LogIn } from 'lucide-react';
+import { loginCustomer } from '../lib/api.js';
+import useAuthStore from '../store/authStore.js';
 
 const stats = [
   { value: '90%',  label: 'Faster Onboarding' },
@@ -38,24 +40,287 @@ const features = [
 ];
 
 const steps = [
-  { num: '01', label: 'Chat with AI',     desc: 'Share your financial goals naturally in a conversation' },
-  { num: '02', label: 'Get Matched',      desc: 'Receive a personalised banking product bundle' },
-  { num: '03', label: 'Verify Identity',  desc: 'Upload KYC docs — done in under 2 minutes' },
-  { num: '04', label: 'Bank Instantly',   desc: 'Account ready. No branch visit needed' },
+  { num: '01', label: 'Fill Your Profile', desc: 'Enter personal, professional, and financial details in 3 quick steps' },
+  { num: '02', label: 'Upload KYC Docs',   desc: 'Upload PAN & Aadhaar — AI auto-fills and verifies in seconds' },
+  { num: '03', label: 'Account Created',   desc: 'Get your account number, Customer ID and MPIN instantly' },
+  { num: '04', label: 'Bank Instantly',    desc: 'Log in to your full dashboard with investments, AI Copilot and more' },
 ];
+
+function startCustomer(navigate) {
+  sessionStorage.setItem('hyperone_role', 'customer');
+  navigate('/register');
+}
+
+function startAdmin(navigate) {
+  sessionStorage.setItem('hyperone_role', 'admin');
+  navigate('/dashboard');
+}
+
+// Modal for existing customer sign-in — uses real backend auth
+function CustomerSignInModal({ onClose, navigate }) {
+  const [step, setStep] = useState('form');
+  const [form, setForm] = useState({ customerId: '', mpin: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const setAuth = useAuthStore(s => s.setAuth);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.customerId.trim()) { setError('Enter your Customer ID.'); return; }
+    if (!form.mpin || form.mpin.length < 6) { setError('Enter your 6-digit MPIN.'); return; }
+
+    setLoading(true);
+    setError('');
+    try {
+      const res = await loginCustomer(form.customerId.trim().toUpperCase(), form.mpin);
+      setAuth(res.token, res.data);
+      sessionStorage.setItem('hyperone_role', 'customer');
+      setStep('success');
+      setTimeout(() => { onClose(); navigate('/my-dashboard'); }, 1000);
+    } catch (err) {
+      setError(err.message || 'Invalid Customer ID or MPIN.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 12 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-sm rounded-[24px] p-8"
+        style={{ background: '#fff', boxShadow: '0 32px 80px rgba(0,0,0,0.22)' }}
+      >
+        {step === 'form' ? (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-1" style={{ color: '#5046e4' }}>Existing Customer</p>
+                <h2 className="text-xl font-bold tracking-tight" style={{ color: '#1d1d1f' }}>Sign In</h2>
+              </div>
+              <button onClick={onClose} className="p-2 rounded-full hover:bg-black/5 transition-colors" style={{ color: '#6e6e73' }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#6e6e73' }}>Customer ID</label>
+                <input
+                  type="text"
+                  value={form.customerId}
+                  onChange={e => { setForm(f => ({ ...f, customerId: e.target.value })); setError(''); }}
+                  placeholder="e.g. SBIH123456"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all font-mono"
+                  style={{ background: '#f5f5f7', border: '1px solid rgba(0,0,0,0.09)', color: '#1d1d1f' }}
+                  onFocus={e => { e.target.style.border = '1px solid #5046e4'; e.target.style.boxShadow = '0 0 0 3px rgba(80,70,228,0.1)'; }}
+                  onBlur={e => { e.target.style.border = '1px solid rgba(0,0,0,0.09)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#6e6e73' }}>6-digit MPIN</label>
+                <input
+                  type="password"
+                  maxLength={6}
+                  value={form.mpin}
+                  onChange={e => { setForm(f => ({ ...f, mpin: e.target.value.replace(/\D/g, '') })); setError(''); }}
+                  placeholder="••••••"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  style={{ background: '#f5f5f7', border: '1px solid rgba(0,0,0,0.09)', color: '#1d1d1f' }}
+                  onFocus={e => { e.target.style.border = '1px solid #5046e4'; e.target.style.boxShadow = '0 0 0 3px rgba(80,70,228,0.1)'; }}
+                  onBlur={e => { e.target.style.border = '1px solid rgba(0,0,0,0.09)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+              {error && <p className="text-xs font-medium" style={{ color: '#dc2626' }}>{error}</p>}
+              <p className="text-[11px]" style={{ color: '#b2b2b7' }}>
+                Your Customer ID and MPIN were shown on your account creation page.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl text-sm font-semibold text-white mt-2 disabled:opacity-60"
+                style={{ background: '#1d1d1f' }}
+              >
+                {loading ? 'Signing in…' : 'Sign In'}
+              </motion.button>
+            </form>
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-4">
+              <LogIn className="w-6 h-6 text-emerald-500" />
+            </div>
+            <h2 className="text-lg font-bold mb-1" style={{ color: '#1d1d1f' }}>Signed in!</h2>
+            <p className="text-sm" style={{ color: '#6e6e73' }}>Loading your dashboard…</p>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Modal for admin sign-in
+function AdminSignInModal({ onClose, navigate }) {
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+  const [step, setStep] = useState('form');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.username || !form.password) {
+      setError('Please enter your credentials.');
+      return;
+    }
+    // For hackathon demo — accept admin / admin123
+    if (form.username === 'admin' && form.password === 'admin123') {
+      setStep('success');
+      setTimeout(() => {
+        onClose();
+        sessionStorage.setItem('hyperone_role', 'admin');
+        navigate('/dashboard');
+      }, 1200);
+    } else {
+      setError('Invalid credentials. Use admin / admin123 for this demo.');
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex items-center justify-center px-4"
+      style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 12 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-sm rounded-[24px] p-8"
+        style={{ background: '#fff', boxShadow: '0 32px 80px rgba(0,0,0,0.22)' }}
+      >
+        {step === 'form' ? (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] mb-1" style={{ color: '#7c3aed' }}>Staff Portal</p>
+                <h2 className="text-xl font-bold tracking-tight" style={{ color: '#1d1d1f' }}>Admin Sign In</h2>
+              </div>
+              <button onClick={onClose} className="p-2 rounded-full hover:bg-black/5 transition-colors" style={{ color: '#6e6e73' }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#6e6e73' }}>Username</label>
+                <input
+                  type="text"
+                  value={form.username}
+                  onChange={e => { setForm(f => ({ ...f, username: e.target.value })); setError(''); }}
+                  placeholder="admin"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  style={{ background: '#f5f5f7', border: '1px solid rgba(0,0,0,0.09)', color: '#1d1d1f' }}
+                  onFocus={e => { e.target.style.border = '1px solid #7c3aed'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.1)'; }}
+                  onBlur={e => { e.target.style.border = '1px solid rgba(0,0,0,0.09)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ color: '#6e6e73' }}>Password</label>
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setError(''); }}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                  style={{ background: '#f5f5f7', border: '1px solid rgba(0,0,0,0.09)', color: '#1d1d1f' }}
+                  onFocus={e => { e.target.style.border = '1px solid #7c3aed'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.1)'; }}
+                  onBlur={e => { e.target.style.border = '1px solid rgba(0,0,0,0.09)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+              {error && <p className="text-xs font-medium" style={{ color: '#dc2626' }}>{error}</p>}
+              <p className="text-xs" style={{ color: '#b2b2b7' }}>Demo credentials: admin / admin123</p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                className="w-full py-3.5 rounded-xl text-sm font-semibold text-white mt-2"
+                style={{ background: 'linear-gradient(135deg, #5046e4, #7c3aed)' }}
+              >
+                Sign In to Dashboard
+              </motion.button>
+            </form>
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
+              <Lock className="w-6 h-6" style={{ color: '#7c3aed' }} />
+            </div>
+            <h2 className="text-lg font-bold mb-1" style={{ color: '#1d1d1f' }}>Authenticated!</h2>
+            <p className="text-sm" style={{ color: '#6e6e73' }}>Loading dashboard…</p>
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export default function Landing() {
   const navigate = useNavigate();
   const featuresRef = useRef(null);
   const howItWorksRef = useRef(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [modal, setModal] = useState(null); // 'customer' | 'admin' | null
+  const [signInOpen, setSignInOpen] = useState(false);
+  const signInRef = useRef(null);
+
+  // Close sign-in dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (signInRef.current && !signInRef.current.contains(e.target)) {
+        setSignInOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const handleLogoClick = () => {
     navigate('/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const scrollTo = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth' });
+    setMobileOpen(false);
+  };
+
   return (
     <div className="min-h-screen" style={{ background: '#f5f5f7', color: '#1d1d1f', fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif' }}>
+
+      {/* ── Sign-in modals ────────────────────────── */}
+      <AnimatePresence>
+        {modal === 'customer' && (
+          <CustomerSignInModal onClose={() => setModal(null)} navigate={navigate} />
+        )}
+        {modal === 'admin' && (
+          <AdminSignInModal onClose={() => setModal(null)} navigate={navigate} />
+        )}
+      </AnimatePresence>
 
       {/* ── Sticky Navigation ──────────────────────── */}
       <motion.nav
@@ -70,9 +335,10 @@ export default function Landing() {
           borderBottom: '1px solid rgba(0,0,0,0.07)',
         }}
       >
+        {/* ── Main nav bar ─── */}
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
 
-          {/* Logo — clickable */}
+          {/* Logo */}
           <button
             onClick={handleLogoClick}
             className="flex items-center gap-2.5 transition-opacity hover:opacity-70"
@@ -83,12 +349,11 @@ export default function Landing() {
             <span className="font-bold text-[1.05rem] tracking-tight" style={{ color: '#1d1d1f' }}>HyperOne</span>
           </button>
 
-          {/* Centre links */}
+          {/* Desktop centre links */}
           <div className="hidden md:flex items-center gap-0.5">
             {[
-              { label: 'Features',     action: () => featuresRef.current?.scrollIntoView({ behavior: 'smooth' }) },
-              { label: 'How It Works', action: () => howItWorksRef.current?.scrollIntoView({ behavior: 'smooth' }) },
-              { label: 'Dashboard',    action: () => navigate('/dashboard') },
+              { label: 'Features',     action: () => scrollTo(featuresRef) },
+              { label: 'How It Works', action: () => scrollTo(howItWorksRef) },
             ].map(item => (
               <button
                 key={item.label}
@@ -103,23 +368,176 @@ export default function Landing() {
             ))}
           </div>
 
-          {/* CTA */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/chat')}
-            className="flex items-center gap-1.5 text-[0.88rem] font-semibold text-white px-5 py-2.5 rounded-full"
-            style={{ background: '#1d1d1f', boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
-          >
-            Get Started
-            <ChevronRight className="w-3.5 h-3.5" />
-          </motion.button>
+          {/* Right: Sign In dropdown + Get Started + hamburger */}
+          <div className="flex items-center gap-2">
+
+            {/* Single "Sign In" dropdown — desktop */}
+            <div className="relative hidden md:block" ref={signInRef}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setSignInOpen(o => !o)}
+                className="flex items-center gap-1.5 text-[0.84rem] font-medium px-3.5 py-2 rounded-full transition-all"
+                style={{
+                  color: signInOpen ? '#1d1d1f' : '#6e6e73',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  background: signInOpen ? 'rgba(0,0,0,0.05)' : 'transparent',
+                }}
+              >
+                <User className="w-3.5 h-3.5" />
+                Sign In
+                <ChevronDown
+                  className="w-3.5 h-3.5 transition-transform duration-200"
+                  style={{ transform: signInOpen ? 'rotate(180deg)' : 'none' }}
+                />
+              </motion.button>
+
+              <AnimatePresence>
+                {signInOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    className="absolute right-0 top-full mt-2 w-52 rounded-[16px] p-1.5 z-50"
+                    style={{
+                      background: '#fff',
+                      border: '1px solid rgba(0,0,0,0.09)',
+                      boxShadow: '0 8px 36px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.07)',
+                    }}
+                  >
+                    {/* Existing Customer option */}
+                    <button
+                      onClick={() => { setSignInOpen(false); setModal('customer'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-left text-[0.87rem] transition-colors"
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,0,0,0.05)' }}>
+                        <User className="w-3.5 h-3.5" style={{ color: '#6e6e73' }} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[0.86rem]" style={{ color: '#1d1d1f' }}>Existing Customer</p>
+                        <p className="text-[11px]" style={{ color: '#8e8e93' }}>Sign in to your account</p>
+                      </div>
+                    </button>
+
+                    <div className="my-1" style={{ height: '1px', background: 'rgba(0,0,0,0.05)' }} />
+
+                    {/* Admin option */}
+                    <button
+                      onClick={() => { setSignInOpen(false); setModal('admin'); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-left text-[0.87rem] transition-colors"
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.06)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(124,58,237,0.08)' }}>
+                        <Lock className="w-3.5 h-3.5" style={{ color: '#7c3aed' }} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-[0.86rem]" style={{ color: '#1d1d1f' }}>Admin</p>
+                        <p className="text-[11px]" style={{ color: '#8e8e93' }}>Staff & analytics portal</p>
+                      </div>
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => startCustomer(navigate)}
+              className="hidden sm:flex items-center gap-1.5 text-[0.88rem] font-semibold text-white px-5 py-2.5 rounded-full"
+              style={{ background: '#1d1d1f', boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
+            >
+              Get Started
+              <ChevronRight className="w-3.5 h-3.5" />
+            </motion.button>
+
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileOpen(o => !o)}
+              className="md:hidden p-2 rounded-xl transition-colors"
+              style={{ color: '#6e6e73' }}
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* ── Mobile dropdown ─── */}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
+              className="md:hidden overflow-hidden"
+              style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}
+            >
+              <div className="px-5 py-4 space-y-1">
+                {[
+                  { label: 'Features',     action: () => scrollTo(featuresRef) },
+                  { label: 'How It Works', action: () => scrollTo(howItWorksRef) },
+                ].map(item => (
+                  <button
+                    key={item.label}
+                    onClick={item.action}
+                    className="block w-full text-left px-3 py-2.5 rounded-xl text-[0.95rem] transition-colors"
+                    style={{ color: '#6e6e73' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.color = '#1d1d1f'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#6e6e73'; }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+                <div className="pt-3 mt-1 space-y-2" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  <button
+                    onClick={() => { setMobileOpen(false); startCustomer(navigate); }}
+                    className="w-full font-semibold text-white text-sm py-3 rounded-full"
+                    style={{ background: '#1d1d1f' }}
+                  >
+                    Begin Onboarding
+                  </button>
+                  <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.08)' }}>
+                    <button
+                      onClick={() => { setMobileOpen(false); setModal('customer'); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors"
+                      style={{ color: '#1d1d1f', borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.03)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <User className="w-4 h-4 flex-shrink-0" style={{ color: '#6e6e73' }} />
+                      <div className="text-left">
+                        <p className="font-medium">Existing Customer</p>
+                        <p className="text-[11px]" style={{ color: '#8e8e93' }}>Sign in to your account</p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => { setMobileOpen(false); setModal('admin'); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm transition-colors"
+                      style={{ color: '#1d1d1f' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(124,58,237,0.05)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <Lock className="w-4 h-4 flex-shrink-0" style={{ color: '#7c3aed' }} />
+                      <div className="text-left">
+                        <p className="font-medium">Admin</p>
+                        <p className="text-[11px]" style={{ color: '#8e8e93' }}>Staff & analytics portal</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.nav>
 
       {/* ── Hero ────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        {/* Subtle gradient accent */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse 80% 55% at 50% -5%, rgba(80,70,228,0.09) 0%, transparent 70%)' }}
@@ -177,27 +595,17 @@ export default function Landing() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.32 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col items-center gap-4"
           >
             <motion.button
               whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/chat')}
+              onClick={() => startCustomer(navigate)}
               className="inline-flex items-center gap-2.5 font-semibold text-white text-base px-9 py-4 rounded-full group"
               style={{ background: '#1d1d1f', boxShadow: '0 4px 24px rgba(0,0,0,0.18), 0 1px 4px rgba(0,0,0,0.1)' }}
             >
-              Start Your Journey
+              Begin Onboarding
               <ArrowRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02, y: -1 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/dashboard')}
-              className="inline-flex items-center gap-2 font-medium text-base px-9 py-4 rounded-full"
-              style={{ color: '#1d1d1f', background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.1)' }}
-            >
-              View Analytics
             </motion.button>
           </motion.div>
         </div>
@@ -312,7 +720,6 @@ export default function Landing() {
           </div>
 
           <div className="relative">
-            {/* Connector line */}
             <div
               className="hidden md:block absolute h-px"
               style={{ top: '28px', left: 'calc(12.5% + 28px)', right: 'calc(12.5% + 28px)', background: 'rgba(0,0,0,0.09)', zIndex: 0 }}
@@ -367,7 +774,7 @@ export default function Landing() {
           <motion.button
             whileHover={{ scale: 1.04, y: -2 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/chat')}
+            onClick={() => startCustomer(navigate)}
             className="inline-flex items-center gap-2.5 font-semibold text-base bg-white rounded-full px-9 py-4 group"
             style={{ color: '#1d1d1f', boxShadow: '0 4px 28px rgba(0,0,0,0.28)' }}
           >

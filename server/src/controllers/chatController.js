@@ -1,4 +1,4 @@
-import { streamChatResponse } from '../services/claude.js';
+import { streamChatResponse } from '../services/gemini.js';
 import { getRecommendations, categorizeProfile } from '../services/recommender.js';
 import Conversation from '../models/Conversation.js';
 import { v4 as uuidv4 } from 'uuid';

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
@@ -9,6 +9,27 @@ import { processKYC, createAccount } from '../lib/api.js';
 import useChatStore from '../store/chatStore.js';
 
 const spring = { type: 'spring', stiffness: 280, damping: 26 };
+
+function EditableField({ label, value, onChange, placeholder }) {
+  return (
+    <div>
+      <label className="text-[10px] text-white/35 uppercase tracking-wide font-medium mb-1.5 block">{label}</label>
+      <input
+        type="text"
+        value={value || ''}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder || `Enter ${label.toLowerCase()}`}
+        className="w-full rounded-xl px-4 py-2.5 text-sm text-white/90 outline-none transition-all duration-200"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.09)',
+        }}
+        onFocus={e => { e.target.style.borderColor = 'rgba(99,102,241,0.5)'; e.target.style.background = 'rgba(255,255,255,0.06)'; }}
+        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.09)'; e.target.style.background = 'rgba(255,255,255,0.04)'; }}
+      />
+    </div>
+  );
+}
 
 function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }) {
   const [status, setStatus] = useState('idle');
@@ -224,17 +245,40 @@ export default function KYC() {
   const [panData, setPanData] = useState(null);
   const [aadhaarData, setAadhaarData] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [reviewData, setReviewData] = useState({});
 
   const bothVerified = panData?.verified && aadhaarData?.verified;
+
+  // Pre-fill editable review when both docs verified
+  useEffect(() => {
+    if (bothVerified) {
+      setReviewData({
+        name: profile?.name || '',
+        panNumber: panData?.panNumber || '',
+        aadhaarNumber: aadhaarData?.aadhaarNumber || '',
+        occupation: profile?.occupation || '',
+        income: profile?.income || '',
+      });
+    }
+  }, [bothVerified]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCompleteOnboarding = async () => {
     if (!bothVerified) return toast.error('Please upload both documents first.');
     setIsCreating(true);
     try {
+      const mergedProfile = {
+        ...(profile || { category: 'salaried', goals: 'Savings' }),
+        name: reviewData.name || profile?.name || 'Demo User',
+        occupation: reviewData.occupation || profile?.occupation || 'Professional',
+        income: reviewData.income || profile?.income || '₹50K-₹1L',
+      };
       const res = await createAccount({
-        profile: profile || { name: 'Demo User', category: 'salaried', occupation: 'Professional', income: '₹50K-₹1L', goals: 'Savings' },
-        kycData: { panNumber: panData?.panNumber, aadhaarNumber: aadhaarData?.aadhaarNumber },
-        onboardingTime: getElapsedTime ? getElapsedTime() : 120, // Safe fallback
+        profile: mergedProfile,
+        kycData: {
+          panNumber: reviewData.panNumber || panData?.panNumber,
+          aadhaarNumber: reviewData.aadhaarNumber || aadhaarData?.aadhaarNumber,
+        },
+        onboardingTime: getElapsedTime ? getElapsedTime() : 120,
         sessionId: Date.now().toString(),
       });
       if (res.success) {
@@ -375,7 +419,7 @@ export default function KYC() {
           </motion.div>
         </div>
 
-        {/* ── Completion indicator ─────────────────────── */}
+        {/* ── Completion indicator + editable profile review ── */}
         <AnimatePresence>
           {bothVerified && (
             <motion.div
@@ -383,14 +427,69 @@ export default function KYC() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={spring}
-              className="flex items-center gap-3 glass-card rounded-2xl p-4 mb-6"
-              style={{ borderColor: 'rgba(16,185,129,0.22)', boxShadow: '0 0 30px rgba(16,185,129,0.08)' }}
+              className="space-y-4 mb-6"
             >
-              <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-white">KYC Complete</p>
-                <p className="text-xs text-white/45">Both documents verified. Ready to open account.</p>
+              {/* KYC complete banner */}
+              <div
+                className="flex items-center gap-3 glass-card rounded-2xl p-4"
+                style={{ borderColor: 'rgba(16,185,129,0.22)', boxShadow: '0 0 30px rgba(16,185,129,0.08)' }}
+              >
+                <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-white">Documents Verified</p>
+                  <p className="text-xs text-white/45">Review and confirm your details below before completing.</p>
+                </div>
               </div>
+
+              {/* Editable profile review */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, ...spring }}
+                className="glass-card rounded-2xl p-5"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                  <h3 className="text-sm font-semibold text-white">Review Your Details</h3>
+                  <span className="ml-auto text-[11px] text-white/35">All fields editable</span>
+                </div>
+                <div className="space-y-3">
+                  <EditableField
+                    label="Full Name"
+                    value={reviewData.name}
+                    onChange={v => setReviewData(d => ({ ...d, name: v }))}
+                    placeholder="Your full name"
+                  />
+                  <EditableField
+                    label="PAN Number"
+                    value={reviewData.panNumber}
+                    onChange={v => setReviewData(d => ({ ...d, panNumber: v }))}
+                    placeholder="e.g. ABCDE1234F"
+                  />
+                  <EditableField
+                    label="Aadhaar (Masked)"
+                    value={reviewData.aadhaarNumber}
+                    onChange={v => setReviewData(d => ({ ...d, aadhaarNumber: v }))}
+                    placeholder="xxxx xxxx xxxx"
+                  />
+                  {(profile?.occupation || reviewData.occupation) && (
+                    <EditableField
+                      label="Occupation"
+                      value={reviewData.occupation}
+                      onChange={v => setReviewData(d => ({ ...d, occupation: v }))}
+                      placeholder="Your occupation"
+                    />
+                  )}
+                  {(profile?.income || reviewData.income) && (
+                    <EditableField
+                      label="Monthly Income"
+                      value={reviewData.income}
+                      onChange={v => setReviewData(d => ({ ...d, income: v }))}
+                      placeholder="e.g. ₹50K–₹1L"
+                    />
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

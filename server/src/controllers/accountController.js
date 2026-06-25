@@ -1,6 +1,11 @@
-import OnboardingRecord from '../models/OnboardingRecord.js';
-import { getRecommendations, categorizeProfile } from '../services/recommender.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import OnboardingRecord from '../models/OnboardingRecord.js';
+import Customer from '../models/Customer.js';
+import { getRecommendations, categorizeProfile } from '../services/recommender.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'hyperone-jwt-secret-2026';
 
 function generateAccountNumber() {
   const prefix = '3';
@@ -10,6 +15,10 @@ function generateAccountNumber() {
 
 function generateCustomerId() {
   return 'SBIH' + Math.floor(Math.random() * 9e5 + 1e5);
+}
+
+function generateMpin() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 export async function createAccount(req, res, next) {
@@ -24,6 +33,8 @@ export async function createAccount(req, res, next) {
     const recommendations = getRecommendations(category);
     const accountNumber = generateAccountNumber();
     const customerId = generateCustomerId();
+    const mpin = generateMpin();
+    const mpinHash = await bcrypt.hash(mpin, 10);
 
     const record = await OnboardingRecord.create({
       sessionId: sessionId || uuidv4(),
@@ -43,11 +54,22 @@ export async function createAccount(req, res, next) {
       onboardingTime: onboardingTime || null,
     });
 
+    await Customer.create({
+      customerId,
+      accountNumber,
+      onboardingRecord: record._id,
+      mpinHash,
+    });
+
+    const token = jwt.sign({ customerId, accountNumber }, JWT_SECRET, { expiresIn: '7d' });
+
     res.json({
       success: true,
       data: {
         accountNumber: record.accountNumber,
         customerId: record.customerId,
+        mpin,
+        token,
         ifscCode: record.ifscCode,
         branchName: record.branchName,
         profile: record.profile,

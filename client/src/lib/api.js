@@ -6,6 +6,12 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('hyperone_customer_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 api.interceptors.response.use(
   res => res.data,
   err => {
@@ -28,6 +34,41 @@ export async function processKYC(extractedText, documentType) {
 
 export async function getDashboardStats() {
   return api.get('/analytics/dashboard');
+}
+
+export async function getAdminCustomers(params = {}) {
+  return api.get('/analytics/customers', { params });
+}
+
+export async function updateCustomerKyc(id, action) {
+  return api.put(`/analytics/customers/${id}/kyc`, { action });
+}
+
+export async function loginCustomer(customerId, mpin) {
+  return api.post('/auth/login', { customerId, mpin });
+}
+
+export async function getMyProfile() {
+  return api.get('/auth/me');
+}
+
+// Copilot streaming — returns a ReadableStreamDefaultReader
+// Usage: const reader = await streamCopilotMessage(messages); then read SSE chunks
+export async function streamCopilotMessage(messages) {
+  const token = localStorage.getItem('hyperone_customer_token');
+  const res = await fetch('/api/copilot/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ messages }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Server error' }));
+    throw new Error(err.error || `HTTP ${res.status}`);
+  }
+  return res.body.getReader();
 }
 
 export default api;

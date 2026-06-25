@@ -62,3 +62,89 @@ export async function getDashboardStats(req, res, next) {
     next(err);
   }
 }
+
+export async function getCustomers(req, res, next) {
+  try {
+    const { search = '', category = '', kyc = '', page = 1, limit = 15 } = req.query;
+
+    const query = {};
+
+    if (search.trim()) {
+      query.$or = [
+        { 'profile.name': { $regex: search.trim(), $options: 'i' } },
+        { customerId: { $regex: search.trim(), $options: 'i' } },
+        { accountNumber: { $regex: search.trim(), $options: 'i' } },
+        { 'kycDocuments.panNumber': { $regex: search.trim(), $options: 'i' } },
+      ];
+    }
+
+    if (category) query['profile.category'] = category;
+
+    if (kyc === 'verified') {
+      query['kycDocuments.panVerified'] = true;
+      query['kycDocuments.aadhaarVerified'] = true;
+    } else if (kyc === 'pending') {
+      query.$and = [
+        ...(query.$and || []),
+        {
+          $or: [
+            { 'kycDocuments.panVerified': false },
+            { 'kycDocuments.aadhaarVerified': false },
+          ],
+        },
+      ];
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [customers, total] = await Promise.all([
+      OnboardingRecord.find(query)
+        .sort({ completedAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .select('-__v'),
+      OnboardingRecord.countDocuments(query),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        customers,
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateKycStatus(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { action } = req.body; // 'approve' | 'reject'
+
+    const record = await OnboardingRecord.findById(id);
+    if (!record) {
+      return res.status(404).json({ success: false, error: 'Customer not found.' });
+    }
+
+    if (action === 'approve') {
+      record.kycDocuments.panVerified = true;
+      record.kycDocuments.aadhaarVerified = true;
+      record.status = 'kyc_complete';
+    } else if (action === 'reject') {
+      record.kycDocuments.panVerified = false;
+      record.kycDocuments.aadhaarVerified = false;
+      record.status = 'pending';
+    } else {
+      return res.status(400).json({ success: false, error: 'Action must be approve or reject.' });
+    }
+
+    await record.save();
+    res.json({ success: true, data: record });
+  } catch (err) {
+    next(err);
+  }
+}

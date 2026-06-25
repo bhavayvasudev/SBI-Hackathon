@@ -8,6 +8,8 @@ import chatRoutes from './routes/chat.js';
 import accountRoutes from './routes/account.js';
 import analyticsRoutes from './routes/analytics.js';
 import kycRoutes from './routes/kyc.js';
+import authRoutes from './routes/auth.js';
+import copilotRoutes from './routes/copilot.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -33,6 +35,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/kyc', kycRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/copilot', copilotRoutes);
 
 app.use(errorHandler);
 

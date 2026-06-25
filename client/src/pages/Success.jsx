@@ -1,12 +1,11 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Copy, BarChart3, Download, Smartphone, Sparkles, Zap } from 'lucide-react';
+import { CheckCircle, Copy, Download, Smartphone, Sparkles, Zap, Home, LayoutDashboard, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
-import Button from '../components/ui/Button.jsx';
+import useAuthStore from '../store/authStore.js';
 
 const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#10b981', '#f59e0b', '#06b6d4'];
-
 const spring = { type: 'spring', stiffness: 280, damping: 26 };
 
 function Confetti() {
@@ -71,15 +70,31 @@ function CopyableField({ label, value }) {
 export default function Success() {
   const location = useLocation();
   const navigate = useNavigate();
+  const setAuth = useAuthStore(s => s.setAuth);
   const accountData = location.state?.accountData;
 
   useEffect(() => {
     sessionStorage.setItem('hyperone_auth', '1');
+    sessionStorage.setItem('hyperone_role', 'customer');
+    // If we have a JWT from account creation, store it
+    if (accountData?.token) {
+      const customerPayload = {
+        customerId: accountData.customerId,
+        accountNumber: accountData.accountNumber,
+        profile: accountData.profile,
+        kycDocuments: accountData.kycDocuments,
+        recommendedProducts: accountData.recommendedProducts,
+        ifscCode: accountData.ifscCode,
+        branchName: accountData.branchName,
+      };
+      setAuth(accountData.token, customerPayload);
+    }
   }, []);
 
   const mockData = {
     accountNumber: '3' + Math.floor(Math.random() * 9e10 + 1e10).toString().slice(0, 10),
     customerId: 'SBIH' + Math.floor(Math.random() * 9e5 + 1e5),
+    mpin: '123456',
     ifscCode: 'SBIN0001234',
     branchName: 'HyperOne Digital Branch',
     profile: { name: 'Demo User', category: 'salaried' },
@@ -87,6 +102,7 @@ export default function Success() {
   };
 
   const data = accountData || mockData;
+  const hasRealToken = !!(accountData?.token);
 
   return (
     <div className="min-h-screen bg-[#060609] flex items-center justify-center relative overflow-hidden px-5 py-12">
@@ -101,7 +117,7 @@ export default function Success() {
 
       <div className="relative z-10 max-w-lg w-full space-y-5">
 
-        {/* ── Logo nav ────────────────────────────────── */}
+        {/* Logo nav */}
         <div className="flex justify-center mb-2">
           <button
             onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
@@ -114,7 +130,7 @@ export default function Success() {
           </button>
         </div>
 
-        {/* ── Success header ──────────────────────────── */}
+        {/* Success header */}
         <motion.div
           initial={{ opacity: 0, scale: 0.75, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -125,7 +141,6 @@ export default function Success() {
             <div className="w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
               <CheckCircle className="w-9 h-9 text-emerald-400" />
             </div>
-            {/* Ring pulse */}
             <motion.div
               className="absolute inset-0 rounded-full border border-emerald-400/25"
               animate={{ scale: [1, 1.6], opacity: [0.6, 0] }}
@@ -146,7 +161,7 @@ export default function Success() {
           </p>
         </motion.div>
 
-        {/* ── Credit card visual ──────────────────────── */}
+        {/* Credit card visual */}
         <motion.div
           initial={{ opacity: 0, y: 28, rotateX: 10 }}
           animate={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -157,21 +172,10 @@ export default function Success() {
             boxShadow: '0 32px 80px rgba(99,102,241,0.4), 0 8px 24px rgba(0,0,0,0.5)',
           }}
         >
-          {/* Shine overlay */}
           <div
             className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'radial-gradient(ellipse at 75% 20%, rgba(255,255,255,0.22) 0%, transparent 55%)',
-            }}
+            style={{ background: 'radial-gradient(ellipse at 75% 20%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
           />
-          {/* Noise texture */}
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.04]"
-            style={{
-              backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-            }}
-          />
-
           <div className="relative p-6 pb-7">
             <div className="flex items-start justify-between mb-10">
               <div>
@@ -205,11 +209,50 @@ export default function Success() {
           </div>
         </motion.div>
 
-        {/* ── Account details ─────────────────────────── */}
+        {/* MPIN card — prominent, save-this-once style */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35 }}
+          transition={{ delay: 0.3 }}
+          className="rounded-2xl p-5"
+          style={{
+            background: 'linear-gradient(135deg, rgba(16,185,129,0.14) 0%, rgba(5,150,105,0.10) 100%)',
+            border: '1px solid rgba(16,185,129,0.25)',
+          }}
+        >
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+              <KeyRound className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-emerald-300 uppercase tracking-[0.16em]">Save Your MPIN</p>
+              <p className="text-[11px] text-white/40">Shown only once — use it to sign in later</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between bg-black/20 rounded-xl px-4 py-3">
+            <div>
+              <p className="text-[10px] text-white/35 uppercase tracking-wide mb-1">6-digit MPIN</p>
+              <p className="text-2xl font-mono font-bold tracking-[0.22em] text-white">{data.mpin || '——'}</p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              onClick={() => { navigator.clipboard.writeText(data.mpin || ''); toast.success('MPIN copied!'); }}
+              className="w-9 h-9 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white/50 hover:text-white/90 transition-colors"
+            >
+              <Copy className="w-4 h-4" />
+            </motion.button>
+          </div>
+          <p className="text-[11px] text-white/30 mt-3">
+            Sign in at any time using: <span className="text-white/55 font-mono">{data.customerId}</span> + this MPIN
+          </p>
+        </motion.div>
+
+        {/* Account details */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
           className="glass-card rounded-2xl p-5"
         >
           <p className="text-[10px] font-semibold text-white/35 uppercase tracking-[0.16em] mb-3">Account Details</p>
@@ -218,12 +261,12 @@ export default function Success() {
           <CopyableField label="IFSC Code" value={data.ifscCode || '—'} />
         </motion.div>
 
-        {/* ── Products activated ──────────────────────── */}
+        {/* Products activated */}
         {data.recommendedProducts?.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
+            transition={{ delay: 0.5 }}
             className="glass-card rounded-2xl p-5"
           >
             <div className="flex items-center gap-2 mb-4">
@@ -236,7 +279,7 @@ export default function Success() {
                   key={i}
                   initial={{ opacity: 0, x: -12 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + i * 0.06, ...spring }}
+                  transition={{ delay: 0.55 + i * 0.06, ...spring }}
                   className="flex items-center gap-2.5"
                 >
                   <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
@@ -249,27 +292,67 @@ export default function Success() {
           </motion.div>
         )}
 
-        {/* ── Actions ─────────────────────────────────── */}
+        {/* Actions */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.58 }}
-          className="flex gap-3"
+          transition={{ delay: 0.62 }}
+          className="grid grid-cols-3 gap-3"
         >
-          <Button variant="glass" className="flex-1" onClick={() => navigate('/')}>
+          {/* Download */}
+          <button
+            onClick={() => {
+              const el = document.createElement('a');
+              el.setAttribute('download', 'hyperone-account-details.txt');
+              el.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(
+                `HyperOne Account Details\n\nAccount Number: ${data.accountNumber}\nCustomer ID: ${data.customerId}\nMPIN: ${data.mpin}\nIFSC Code: ${data.ifscCode}\nBranch: ${data.branchName}\n\nKeep your MPIN secret.`
+              ));
+              el.click();
+            }}
+            className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-medium transition-all"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.65)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+          >
             <Download className="w-4 h-4" />
-            Download Kit
-          </Button>
-          <Button variant="primary" className="flex-1" onClick={() => navigate('/dashboard')}>
-            View Dashboard
-            <BarChart3 className="w-4 h-4" />
-          </Button>
+            Save
+          </button>
+
+          {/* Go to Dashboard — primary if authenticated, else secondary */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate('/my-dashboard')}
+            className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold text-white"
+            style={{
+              background: hasRealToken
+                ? 'linear-gradient(135deg, #059669, #10b981)'
+                : 'rgba(255,255,255,0.08)',
+              border: hasRealToken ? 'none' : '1px solid rgba(255,255,255,0.12)',
+              boxShadow: hasRealToken ? '0 4px 20px rgba(5,150,105,0.35)' : 'none',
+            }}
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+          </motion.button>
+
+          {/* Return Home */}
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold text-white transition-all"
+            style={{ background: '#1d1d1f', border: '1px solid rgba(255,255,255,0.08)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#2d2d2f'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#1d1d1f'; }}
+          >
+            <Home className="w-4 h-4" />
+            Home
+          </button>
         </motion.div>
 
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.68 }}
+          transition={{ delay: 0.72 }}
           className="text-center text-xs text-white/25 pb-2"
         >
           Welcome aboard · Built for SBI HackFest 2026
