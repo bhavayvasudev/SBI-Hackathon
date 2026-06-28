@@ -15,9 +15,13 @@ const useAuthStore = create((set, get) => ({
     set({ token, customer });
   },
 
+  // Wipes every auth credential from all storage so the back button cannot
+  // restore a session after logout (belt-and-suspenders alongside bfcache guards).
   clearAuth: () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(PROFILE_KEY);
+    sessionStorage.removeItem('hyperone_admin_token');
+    sessionStorage.removeItem('hyperone_role');
     set({ token: null, customer: null });
   },
 

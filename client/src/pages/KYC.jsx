@@ -7,7 +7,7 @@ import {
   Sparkles, Zap, Check, ArrowRight, Lock, Cpu,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { processKYC, createAccount } from '../lib/api.js';
+import { uploadKYCDocument, createAccount } from '../lib/api.js';
 import useChatStore from '../store/chatStore.js';
 
 const KYC_CSS = `
@@ -301,36 +301,20 @@ function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }
     const previewUrl = URL.createObjectURL(file);
     setPreview(previewUrl);
     setStatus('processing');
-    setProgress(10);
+    setProgress(15);
 
-    let progressInterval = null;
+    // Simulate progress while the server runs OCR — actual work happens on the backend
+    let progressInterval = setInterval(() => {
+      setProgress(p => Math.min(p + 5, 85));
+    }, 600);
+
     try {
-      progressInterval = setInterval(() => {
-        setProgress(p => Math.min(p + 8, 88));
-      }, 300);
-
-      // DYNAMIC IMPORT: Prevents Vite top-level crashes and bundle evaluation errors
-      const TesseractModule = await import('tesseract.js');
-      let text = '';
-
-      // Gracefully handle both v5 and v4 API structures
-      if (typeof TesseractModule.createWorker === 'function') {
-        const worker = await TesseractModule.createWorker('eng');
-        const result = await worker.recognize(file);
-        text = result.data.text;
-        await worker.terminate();
-      } else if (TesseractModule.default && typeof TesseractModule.default.recognize === 'function') {
-        const result = await TesseractModule.default.recognize(file, 'eng');
-        text = result.data.text;
-      } else {
-        throw new Error('Tesseract initialization failed');
-      }
+      const res = await uploadKYCDocument(file, type);
 
       clearInterval(progressInterval);
       progressInterval = null;
       setProgress(100);
 
-      const res = await processKYC(text, type);
       if (res.success) {
         onExtracted(res.data);
         setStatus('done');
@@ -339,7 +323,7 @@ function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }
         throw new Error(res.error || 'Processing failed');
       }
     } catch (err) {
-      if (progressInterval) clearInterval(progressInterval);
+      clearInterval(progressInterval);
       URL.revokeObjectURL(previewUrl);
       setPreview(null);
       setProgress(0);
@@ -466,7 +450,7 @@ function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }
                 >
                   <Loader style={{ width: 28, height: 28, color: accentColor }} className="animate-spin" />
                   <div style={{ width: '100%' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '10px' }}>Extracting via OCR…</p>
+                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '10px' }}>AI analyzing document…</p>
                     <div style={{ width: '100%', height: '4px', borderRadius: '100px', background: 'rgba(0,0,0,0.07)', overflow: 'hidden' }}>
                       <motion.div
                         initial={{ width: '0%' }}

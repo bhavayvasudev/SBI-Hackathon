@@ -50,11 +50,6 @@ export const createAccountSchema = z.object({
   onboardingTime: z.number().min(0).optional().nullable(),
 });
 
-export const kycProcessSchema = z.object({
-  extractedText: z.string().min(1).max(5000),
-  documentType: z.enum(['pan', 'aadhaar']),
-});
-
 export const kycActionSchema = z.object({
   action: z.enum(['approve', 'reject']),
 });

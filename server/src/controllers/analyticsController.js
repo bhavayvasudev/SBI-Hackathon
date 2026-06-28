@@ -65,7 +65,10 @@ export async function getDashboardStats(req, res, next) {
 
 export async function getCustomers(req, res, next) {
   try {
-    const { search = '', category = '', kyc = '', page = 1, limit = 15 } = req.query;
+    const { search = '', category = '', kyc = '' } = req.query;
+    // Cap page and limit to prevent DB abuse via pagination params
+    const page  = Math.max(parseInt(req.query.page)  || 1,  1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 15, 1), 100);
 
     const query = {};
 
@@ -95,13 +98,13 @@ export async function getCustomers(req, res, next) {
       ];
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const skip = (page - 1) * limit;
 
     const [customers, total] = await Promise.all([
       OnboardingRecord.find(query)
         .sort({ completedAt: -1 })
         .skip(skip)
-        .limit(parseInt(limit))
+        .limit(limit)
         .select('-__v'),
       OnboardingRecord.countDocuments(query),
     ]);
@@ -111,8 +114,8 @@ export async function getCustomers(req, res, next) {
       data: {
         customers,
         total,
-        page: parseInt(page),
-        pages: Math.ceil(total / parseInt(limit)),
+        page,
+        pages: Math.ceil(total / limit),
       },
     });
   } catch (err) {

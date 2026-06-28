@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore.js';
-import { getMyProfile } from '../lib/api.js';
+import { getMyProfile, logoutCustomer } from '../lib/api.js';
 import CopilotPanel from '../components/CopilotPanel.jsx';
 
 /* ─── Deterministic mock data ────────────────────────────── */
@@ -271,7 +271,12 @@ export default function CustomerDashboard() {
 
   useEffect(()=>{ if(profile?.customerId) setGoals(loadGoals(profile.customerId)); },[profile?.customerId]);
 
-  const handleSignOut = ()=>{ clearAuth(); sessionStorage.removeItem('hyperone_role'); navigate('/'); };
+  const handleSignOut = async () => {
+    // Invalidate the JWT server-side first (best-effort — client clears regardless)
+    try { await logoutCustomer(); } catch { /* server unreachable — still clear locally */ }
+    clearAuth(); // wipes localStorage tokens + all sessionStorage auth keys
+    navigate('/');
+  };
   const addGoal = template=>{
     const g={ id:'g'+Date.now(), templateId:template.id, title:template.title, emoji:template.emoji,
       target:template.defaultTarget, current:0, color:template.color,

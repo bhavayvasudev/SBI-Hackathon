@@ -9,10 +9,10 @@ import {
   Users, TrendingUp, Clock, CheckCircle, ArrowLeft,
   Zap, GraduationCap, Briefcase, Building2, Activity,
   Search, Filter, ChevronDown, Eye, ThumbsUp, ThumbsDown,
-  XCircle, Shield, ShieldCheck, ShieldAlert,
+  XCircle, Shield, ShieldCheck, ShieldAlert, LogOut,
 } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard.jsx';
-import { getDashboardStats, getAdminCustomers, updateCustomerKyc } from '../lib/api.js';
+import { getDashboardStats, getAdminCustomers, updateCustomerKyc, logoutAdmin } from '../lib/api.js';
 import toast from 'react-hot-toast';
 
 const PIE_COLORS = ['#1A56DB', '#10b981', '#f59e0b'];
@@ -298,6 +298,13 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleAdminLogout = async () => {
+    try { await logoutAdmin(); } catch { /* best effort */ }
+    sessionStorage.removeItem('hyperone_admin_token');
+    sessionStorage.removeItem('hyperone_role');
+    navigate('/');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#080912] flex items-center justify-center">
@@ -405,6 +412,17 @@ export default function Dashboard() {
               <span className="text-xs text-white/50 font-medium">Live</span>
               <Activity className="w-3.5 h-3.5 text-emerald-400" />
             </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAdminLogout}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors"
+              style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </motion.button>
           </div>
         </div>
       </motion.header>

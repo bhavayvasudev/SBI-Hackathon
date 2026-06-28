@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Landing from './pages/Landing.jsx';
 import Register from './pages/Register.jsx';
@@ -8,7 +9,24 @@ import Success from './pages/Success.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import CustomerDashboard from './pages/CustomerDashboard.jsx';
 
+// Guards both the render-time check (redirect if not authed) AND the
+// bfcache "pageshow" case — when the browser restores this page from
+// the back-forward cache after a logout, the persisted flag is true
+// and we re-validate storage before allowing the user to see the page.
+
 function AdminRoute({ children }) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handlePageShow = (e) => {
+      if (e.persisted && sessionStorage.getItem('hyperone_role') !== 'admin') {
+        navigate('/', { replace: true });
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [navigate]);
+
   if (sessionStorage.getItem('hyperone_role') !== 'admin') {
     return <Navigate to="/" replace />;
   }
@@ -16,8 +34,19 @@ function AdminRoute({ children }) {
 }
 
 function CustomerRoute({ children }) {
-  const token = localStorage.getItem('hyperone_customer_token');
-  if (!token) {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handlePageShow = (e) => {
+      if (e.persisted && !localStorage.getItem('hyperone_customer_token')) {
+        navigate('/', { replace: true });
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [navigate]);
+
+  if (!localStorage.getItem('hyperone_customer_token')) {
     return <Navigate to="/" replace />;
   }
   return children;

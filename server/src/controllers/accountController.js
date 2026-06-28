@@ -65,10 +65,11 @@ export async function createAccount(req, res, next) {
       mpinHash,
     });
 
+    // Include jti so this token can be individually revoked if needed
     const token = jwt.sign(
       { customerId, accountNumber },
       JWT_SECRET,
-      { algorithm: JWT_ALGORITHM, expiresIn: JWT_EXPIRES_IN }
+      { algorithm: JWT_ALGORITHM, expiresIn: JWT_EXPIRES_IN, jwtid: uuidv4() }
     );
 
     res.json({
