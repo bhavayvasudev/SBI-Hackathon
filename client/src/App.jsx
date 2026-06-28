@@ -23,16 +23,25 @@ function CustomerRoute({ children }) {
   return children;
 }
 
+// Redirect already-authenticated customers away from public/onboarding pages
+function PublicOnlyRoute({ children }) {
+  const token = localStorage.getItem('hyperone_customer_token');
+  if (token) {
+    return <Navigate to="/my-dashboard" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Landing />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/chat" element={<Chat />} />
-        <Route path="/kyc" element={<KYC />} />
-        <Route path="/success" element={<Success />} />
+        <Route path="/" element={<PublicOnlyRoute><Landing /></PublicOnlyRoute>} />
+        <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+        <Route path="/chat" element={<PublicOnlyRoute><Chat /></PublicOnlyRoute>} />
+        <Route path="/kyc" element={<PublicOnlyRoute><KYC /></PublicOnlyRoute>} />
+        <Route path="/success" element={<PublicOnlyRoute><Success /></PublicOnlyRoute>} />
         <Route path="/dashboard" element={
           <AdminRoute>
             <Dashboard />

@@ -188,7 +188,7 @@ export async function streamCopilotResponse(messages, customerData, res) {
   const systemPrompt = buildSystemPrompt(customerData);
 
   const trimmed = trimContext(messages);
-  console.log(`[Copilot] → request | msgs: ${messages.length}→${trimmed.length} | customer: ${customerData.customerId}`);
+  console.log(`[Copilot] → request | msgs: ${messages.length}→${trimmed.length}`);
 
   const contents = trimmed.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',

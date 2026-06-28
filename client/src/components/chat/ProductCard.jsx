@@ -3,13 +3,13 @@ import { CheckCircle } from 'lucide-react';
 
 // Accent colors per product type — light mode palette
 const TYPE_ACCENTS = {
-  savings:    { bg: 'rgba(80,70,228,0.07)',  border: 'rgba(80,70,228,0.15)',  icon: '#5046e4',  bar: '#5046e4' },
-  credit:     { bg: 'rgba(124,58,237,0.07)', border: 'rgba(124,58,237,0.15)', icon: '#7c3aed',  bar: '#7c3aed' },
+  savings:    { bg: 'rgba(26,86,219,0.07)',  border: 'rgba(26,86,219,0.15)',  icon: '#1A56DB',  bar: '#1A56DB' },
+  credit:     { bg: 'rgba(30,58,138,0.07)',  border: 'rgba(30,58,138,0.15)',  icon: '#1E3A8A',  bar: '#1E3A8A' },
   investment: { bg: 'rgba(16,185,129,0.07)', border: 'rgba(16,185,129,0.15)', icon: '#10b981',  bar: '#10b981' },
   insurance:  { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.18)', icon: '#d97706',  bar: '#f59e0b' },
   loan:       { bg: 'rgba(239,68,68,0.07)',  border: 'rgba(239,68,68,0.15)',  icon: '#ef4444',  bar: '#ef4444' },
 };
-const DEFAULT_ACCENT = { bg: 'rgba(80,70,228,0.07)', border: 'rgba(80,70,228,0.15)', icon: '#5046e4', bar: '#5046e4' };
+const DEFAULT_ACCENT = { bg: 'rgba(26,86,219,0.07)', border: 'rgba(26,86,219,0.15)', icon: '#1A56DB', bar: '#1A56DB' };
 
 function getAccent(type = '') {
   return TYPE_ACCENTS[type.toLowerCase()] || DEFAULT_ACCENT;

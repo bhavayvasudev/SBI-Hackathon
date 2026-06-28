@@ -20,11 +20,11 @@ export default function Button({
   const variants = {
     primary:
       'text-white ' +
-      'bg-gradient-to-r from-indigo-500 to-violet-600 ' +
-      'border border-indigo-400/40 ' +
-      'shadow-[0_4px_20px_rgba(99,102,241,0.38),inset_0_1px_0_rgba(255,255,255,0.15)] ' +
-      'hover:from-indigo-400 hover:to-violet-500 ' +
-      'hover:shadow-[0_8px_30px_rgba(99,102,241,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] ' +
+      'bg-gradient-to-r from-blue-800 to-blue-600 ' +
+      'border border-blue-700/40 ' +
+      'shadow-[0_4px_20px_rgba(26,86,219,0.38),inset_0_1px_0_rgba(255,255,255,0.15)] ' +
+      'hover:from-blue-700 hover:to-blue-500 ' +
+      'hover:shadow-[0_8px_30px_rgba(26,86,219,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] ' +
       'hover:-translate-y-0.5 active:scale-[0.97]',
 
     glass:

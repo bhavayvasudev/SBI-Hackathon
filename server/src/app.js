@@ -19,16 +19,45 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
 }));
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ extended: true, limit: '20mb' }));
-app.use(morgan('dev'));
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+// Recursively strip HTML/script tags from all string values in request body
+function sanitizeBody(req, res, next) {
+  const strip = (v) => typeof v === 'string' ? v.replace(/<[^>]*>/g, '').trim() : v;
+  function deep(obj) {
+    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+      for (const k of Object.keys(obj)) {
+        obj[k] = typeof obj[k] === 'object' ? deep(obj[k]) : strip(obj[k]);
+      }
+    }
+    return obj;
+  }
+  if (req.body) deep(req.body);
+  next();
+}
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
-  message: { error: 'Too many requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests. Please try again later.' },
 });
 app.use('/api/', limiter);
+
+// Stricter rate limiting for auth endpoints (10 failed req/min per IP)
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { success: false, error: 'Too many requests. Please try again later.' },
+});
+app.use('/api/auth/', authLimiter);
+app.use('/api/', sanitizeBody);
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', service: 'HyperOne API v1.0' }));
 app.use('/api/chat', chatRoutes);

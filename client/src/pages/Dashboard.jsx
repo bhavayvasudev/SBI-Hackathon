@@ -15,7 +15,7 @@ import StatCard from '../components/dashboard/StatCard.jsx';
 import { getDashboardStats, getAdminCustomers, updateCustomerKyc } from '../lib/api.js';
 import toast from 'react-hot-toast';
 
-const PIE_COLORS = ['#6366f1', '#10b981', '#f59e0b'];
+const PIE_COLORS = ['#1A56DB', '#10b981', '#f59e0b'];
 const spring = { type: 'spring', stiffness: 260, damping: 28 };
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -39,7 +39,7 @@ function CustomerRow({ record, onKycAction }) {
   const [expanded, setExpanded] = useState(false);
   const kycOk = record.kycDocuments?.panVerified && record.kycDocuments?.aadhaarVerified;
   const catColor = {
-    student:  { bg: 'rgba(99,102,241,0.15)',  text: '#a5b4fc', dot: '#6366f1' },
+    student:  { bg: 'rgba(26,86,219,0.15)',  text: '#93C5FD', dot: '#1A56DB' },
     salaried: { bg: 'rgba(16,185,129,0.15)',  text: '#6ee7b7', dot: '#10b981' },
     business: { bg: 'rgba(245,158,11,0.15)',  text: '#fcd34d', dot: '#f59e0b' },
   }[record.profile?.category] || { bg: 'rgba(255,255,255,0.08)', text: '#fff', dot: '#fff' };
@@ -93,8 +93,12 @@ function CustomerRow({ record, onKycAction }) {
                 {[
                   { label: 'Occupation', value: record.profile?.occupation || '—' },
                   { label: 'Income', value: record.profile?.income || '—' },
-                  { label: 'PAN', value: record.kycDocuments?.panNumber || 'Not uploaded' },
-                  { label: 'Aadhaar', value: record.kycDocuments?.aadhaarNumber ? record.kycDocuments.aadhaarNumber.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3') : 'Not uploaded' },
+                  { label: 'PAN Number', value: record.kycDocuments?.panNumber || 'Not uploaded' },
+                  { label: 'PAN Name', value: record.kycDocuments?.panName || '—' },
+                  { label: 'PAN DOB', value: record.kycDocuments?.panDob || '—' },
+                  { label: 'Aadhaar', value: record.kycDocuments?.aadhaarNumber ? record.kycDocuments.aadhaarNumber.replace(/^(\w{4})-(\w{4})-(\w{4})$/, '$1 $2 $3') : 'Not uploaded' },
+                  { label: 'Aadhaar Name', value: record.kycDocuments?.aadhaarName || '—' },
+                  { label: 'Aadhaar DOB', value: record.kycDocuments?.aadhaarDob || (record.kycDocuments?.aadhaarGender ? `— · ${record.kycDocuments.aadhaarGender}` : '—') },
                 ].map((item, i) => (
                   <div key={i}>
                     <p className="text-[10px] text-white/35 uppercase tracking-wide mb-0.5">{item.label}</p>
@@ -206,7 +210,7 @@ function CustomersPanel() {
             placeholder="Search by name, customer ID, account, PAN…"
             className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm outline-none transition-all"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-            onFocus={e => { e.target.style.border = '1px solid rgba(99,102,241,0.5)'; }}
+            onFocus={e => { e.target.style.border = '1px solid rgba(26,86,219,0.5)'; }}
             onBlur={e => { e.target.style.border = '1px solid rgba(255,255,255,0.1)'; }}
           />
         </div>
@@ -290,19 +294,19 @@ export default function Dashboard() {
   useEffect(() => {
     getDashboardStats()
       .then(res => { if (res.success) setStats(res.data); })
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#060609] flex items-center justify-center">
+      <div className="min-h-screen bg-[#080912] flex items-center justify-center">
         <div className="text-center space-y-5">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
             className="w-12 h-12 rounded-2xl mx-auto"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', boxShadow: '0 0 40px rgba(99,102,241,0.4)' }}
+            style={{ background: 'linear-gradient(135deg, #1E3A8A, #1A56DB)', boxShadow: '0 0 40px rgba(26,86,219,0.4)' }}
           >
             <div className="w-full h-full rounded-2xl flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
@@ -338,11 +342,11 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#060609] relative">
+    <div className="min-h-screen bg-[#080912] relative" style={{ fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="orb w-[500px] h-[500px] bg-indigo-700" style={{ top: '-200px', right: '-100px' }} />
-        <div className="orb w-[300px] h-[300px] bg-purple-800" style={{ bottom: '-100px', left: '-80px', opacity: 0.09 }} />
+        <div className="orb w-[500px] h-[500px] bg-blue-900" style={{ top: '-200px', right: '-100px' }} />
+        <div className="orb w-[300px] h-[300px] bg-blue-800" style={{ bottom: '-100px', left: '-80px', opacity: 0.08 }} />
       </div>
 
       {/* ── Header ── */}
@@ -365,8 +369,8 @@ export default function Dashboard() {
               onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               className="flex items-center gap-3 hover:opacity-75 transition-opacity"
             >
-              <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
-                style={{ boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
+              <div className="w-9 h-9 rounded-[10px] flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, #1E3A8A, #1A56DB)', boxShadow: '0 4px 14px rgba(26,86,219,0.35)' }}
               >
                 <Zap className="w-4 h-4 text-white" />
               </div>
@@ -386,9 +390,9 @@ export default function Dashboard() {
                   onClick={() => setActiveTab(tab.id)}
                   className="px-4 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                   style={{
-                    background: activeTab === tab.id ? 'rgba(99,102,241,0.25)' : 'transparent',
-                    color: activeTab === tab.id ? '#a5b4fc' : 'rgba(255,255,255,0.45)',
-                    border: activeTab === tab.id ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+                    background: activeTab === tab.id ? 'rgba(26,86,219,0.25)' : 'transparent',
+                    color: activeTab === tab.id ? '#93C5FD' : 'rgba(255,255,255,0.45)',
+                    border: activeTab === tab.id ? '1px solid rgba(26,86,219,0.3)' : '1px solid transparent',
                   }}
                 >
                   {tab.label}
@@ -413,9 +417,9 @@ export default function Dashboard() {
             onClick={() => setActiveTab(tab.id)}
             className="flex-1 py-2 rounded-xl text-sm font-medium transition-all"
             style={{
-              background: activeTab === tab.id ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)',
-              color: activeTab === tab.id ? '#a5b4fc' : 'rgba(255,255,255,0.45)',
-              border: `1px solid ${activeTab === tab.id ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)'}`,
+              background: activeTab === tab.id ? 'rgba(26,86,219,0.2)' : 'rgba(255,255,255,0.05)',
+              color: activeTab === tab.id ? '#93C5FD' : 'rgba(255,255,255,0.45)',
+              border: `1px solid ${activeTab === tab.id ? 'rgba(26,86,219,0.3)' : 'rgba(255,255,255,0.08)'}`,
             }}
           >
             {tab.label}
@@ -438,9 +442,9 @@ export default function Dashboard() {
             >
               {/* Stat cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title="Total Onboarded" value={stats?.totalOnboarded?.toLocaleString() || '0'} subtitle="All time" icon={Users} color="indigo" index={0} />
+                <StatCard title="Total Onboarded" value={stats?.totalOnboarded?.toLocaleString() || '0'} subtitle="All time" icon={Users} color="blue" index={0} />
                 <StatCard title="Conversion Rate" value={`${stats?.conversionRate || 0}%`} subtitle="Lead → Account" icon={TrendingUp} color="emerald" index={1} />
-                <StatCard title="Avg. Onboarding" value={`${Math.floor((stats?.avgOnboardingTime || 0) / 60)}m ${(stats?.avgOnboardingTime || 0) % 60}s`} subtitle="vs. 3 days at branch" icon={Clock} color="purple" index={2} />
+                <StatCard title="Avg. Onboarding" value={`${Math.floor((stats?.avgOnboardingTime || 0) / 60)}m ${(stats?.avgOnboardingTime || 0) % 60}s`} subtitle="vs. 3 days at branch" icon={Clock} color="blue" index={2} />
                 <StatCard title="KYC Success" value="98.4%" subtitle="Digital verification" icon={CheckCircle} color="amber" index={3} />
               </div>
 
@@ -452,21 +456,21 @@ export default function Dashboard() {
                       <h2 className="text-sm font-semibold text-white">Daily Onboardings</h2>
                       <p className="text-xs text-white/35 mt-0.5">Last 14 days</p>
                     </div>
-                    <div className="px-3 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(99,102,241,0.12)', color: '#a5b4fc', border: '1px solid rgba(99,102,241,0.2)' }}>Trend ↑</div>
+                    <div className="px-3 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(26,86,219,0.12)', color: '#93C5FD', border: '1px solid rgba(26,86,219,0.2)' }}>Trend ↑</div>
                   </div>
                   <ResponsiveContainer width="100%" height={200}>
                     <AreaChart data={dailyChartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#1A56DB" stopOpacity={0.35} />
+                          <stop offset="95%" stopColor="#1A56DB" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
                       <XAxis dataKey="date" tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: 10 }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fill: 'rgba(255,255,255,0.28)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                      <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(99,102,241,0.3)', strokeWidth: 1 }} />
-                      <Area type="monotone" dataKey="onboardings" stroke="#6366f1" strokeWidth={2.5} fill="url(#areaGrad)" dot={false} activeDot={{ r: 5, fill: '#6366f1', strokeWidth: 0 }} />
+                      <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(26,86,219,0.3)', strokeWidth: 1 }} />
+                      <Area type="monotone" dataKey="onboardings" stroke="#1A56DB" strokeWidth={2.5} fill="url(#areaGrad)" dot={false} activeDot={{ r: 5, fill: '#1A56DB', strokeWidth: 0 }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 </motion.div>
@@ -516,8 +520,8 @@ export default function Dashboard() {
                     <BarChart data={productData} layout="vertical" margin={{ top: 0, right: 8, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#6366f1" />
-                          <stop offset="100%" stopColor="#a855f7" />
+                          <stop offset="0%" stopColor="#1E3A8A" />
+                          <stop offset="100%" stopColor="#1A56DB" />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
@@ -535,7 +539,7 @@ export default function Dashboard() {
                   <div className="space-y-1">
                     {(stats?.recentOnboardings || []).slice(0, 8).map((r, i) => {
                       const catColor = {
-                        student:  { bg: 'rgba(99,102,241,0.15)',  text: '#a5b4fc', dot: '#6366f1' },
+                        student:  { bg: 'rgba(26,86,219,0.15)',  text: '#93C5FD', dot: '#1A56DB' },
                         salaried: { bg: 'rgba(16,185,129,0.15)',  text: '#6ee7b7', dot: '#10b981' },
                         business: { bg: 'rgba(245,158,11,0.15)',  text: '#fcd34d', dot: '#f59e0b' },
                       }[r.profile?.category] || { bg: 'rgba(255,255,255,0.08)', text: '#fff', dot: '#fff' };

@@ -2,35 +2,294 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import { Upload, CheckCircle, Loader, ArrowLeft, ShieldCheck, FileText, Sparkles, Zap } from 'lucide-react';
+import {
+  Upload, CheckCircle, Loader, ShieldCheck, FileText,
+  Sparkles, Zap, Check, ArrowRight, Lock, Cpu,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
-import Button from '../components/ui/Button.jsx';
 import { processKYC, createAccount } from '../lib/api.js';
 import useChatStore from '../store/chatStore.js';
 
-const spring = { type: 'spring', stiffness: 280, damping: 26 };
+const KYC_CSS = `
+  @keyframes kycFloat1 {
+    0%, 100% { transform: translateY(0px) rotate(-2deg); }
+    50%       { transform: translateY(-12px) rotate(0deg); }
+  }
+  @keyframes kycFloat2 {
+    0%, 100% { transform: translateY(0px) rotate(3deg); }
+    50%       { transform: translateY(-10px) rotate(5deg); }
+  }
+  @keyframes kycFloat3 {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50%       { transform: translateY(-14px) scale(1.04); }
+  }
+  @keyframes kycFloat4 {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-7px); }
+  }
+  .kyc-f1 { animation: kycFloat1 5s ease-in-out infinite; will-change: transform; }
+  .kyc-f2 { animation: kycFloat2 6.5s ease-in-out infinite 1.2s; will-change: transform; }
+  .kyc-f3 { animation: kycFloat3 4s ease-in-out infinite 2s; will-change: transform; }
+  .kyc-f4 { animation: kycFloat4 3.8s ease-in-out infinite 0.7s; will-change: transform; }
+`;
 
-function EditableField({ label, value, onChange, placeholder }) {
+const FEATURES = [
+  { icon: <Cpu style={{ width: 13, height: 13 }} />,        label: 'OCR-powered extraction',      color: '#60a5fa' },
+  { icon: <ShieldCheck style={{ width: 13, height: 13 }} />, label: 'Aadhaar & PAN verification', color: '#34d399' },
+  { icon: <Lock style={{ width: 13, height: 13 }} />,        label: 'RBI-compliant onboarding',    color: '#a78bfa' },
+  { icon: <Zap style={{ width: 13, height: 13 }} />,         label: 'End-to-end encryption',       color: '#fbbf24' },
+  { icon: <Sparkles style={{ width: 13, height: 13 }} />,    label: 'Instant account activation',  color: '#f472b6' },
+];
+
+const TIMELINE_STEPS = [
+  'Upload documents',
+  'AI OCR extraction',
+  'Identity verification',
+  'Account activation',
+];
+
+// ─── Floating card illustrations ────────────────────────────────────────────
+function FloatingIllustrations() {
   return (
-    <div>
-      <label className="text-[10px] text-white/35 uppercase tracking-wide font-medium mb-1.5 block">{label}</label>
+    <div style={{ position: 'relative', height: '230px', width: '100%' }}>
+      {/* Aadhaar card */}
+      <div className="kyc-f1" style={{
+        position: 'absolute', left: '4%', top: '8px',
+        width: '172px', height: '104px', borderRadius: '14px',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.07))',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,0.22)',
+        boxShadow: '0 20px 48px rgba(0,0,0,0.35)',
+        padding: '12px 14px', overflow: 'hidden',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: 'rgba(255,165,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px' }}>🏛</div>
+          <div>
+            <div style={{ fontSize: '5px', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Government of India</div>
+            <div style={{ fontSize: '7.5px', fontWeight: 800, color: 'rgba(255,255,255,0.95)' }}>आधार</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+          <div style={{ width: '32px', height: '36px', borderRadius: '5px', background: 'rgba(255,255,255,0.14)', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(255,255,255,0.25)', marginBottom: '4px', width: '85%' }} />
+            <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(255,255,255,0.18)', marginBottom: '5px', width: '55%' }} />
+            <div style={{ fontSize: '8px', fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '1.5px', fontFamily: 'monospace' }}>XXXX XXXX 4521</div>
+          </div>
+        </div>
+      </div>
+
+      {/* PAN card */}
+      <div className="kyc-f2" style={{
+        position: 'absolute', right: '4%', top: '48px',
+        width: '156px', height: '92px', borderRadius: '12px',
+        background: 'linear-gradient(135deg, rgba(245,158,11,0.32), rgba(217,119,6,0.16))',
+        border: '1px solid rgba(245,158,11,0.32)',
+        boxShadow: '0 18px 40px rgba(0,0,0,0.3)',
+        padding: '12px 14px', overflow: 'hidden',
+      }}>
+        <div style={{ fontSize: '5px', color: 'rgba(255,255,255,0.42)', letterSpacing: '0.4px', textTransform: 'uppercase', marginBottom: '3px' }}>Income Tax Dept · Govt of India</div>
+        <div style={{ fontSize: '6px', fontWeight: 700, color: 'rgba(255,255,255,0.75)', marginBottom: '8px' }}>Permanent Account Number</div>
+        <div style={{ fontSize: '12px', fontWeight: 800, color: '#FCD34D', letterSpacing: '2px', fontFamily: 'monospace', marginBottom: '7px' }}>ABCDE1234F</div>
+        <div style={{ height: '2px', borderRadius: '1px', background: 'rgba(255,255,255,0.12)' }} />
+      </div>
+
+      {/* Shield orb */}
+      <div className="kyc-f3" style={{
+        position: 'absolute', left: '44%', bottom: '18px',
+        width: '56px', height: '56px', borderRadius: '50%',
+        background: 'rgba(16,185,129,0.18)',
+        border: '2px solid rgba(16,185,129,0.4)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 0 32px rgba(16,185,129,0.3), 0 8px 24px rgba(0,0,0,0.2)',
+      }}>
+        <ShieldCheck style={{ width: 24, height: 24, color: '#34d399' }} />
+      </div>
+
+      {/* AI badge */}
+      <div className="kyc-f4" style={{
+        position: 'absolute', left: '10%', bottom: '10px',
+        padding: '7px 14px', borderRadius: '100px',
+        background: 'rgba(255,255,255,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        backdropFilter: 'blur(12px)',
+        display: 'flex', alignItems: 'center', gap: '6px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+      }}>
+        <Cpu style={{ width: 11, height: 11, color: '#60a5fa' }} />
+        <span style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>AI OCR Active</span>
+      </div>
+
+      {/* Glow under cards */}
+      <div style={{
+        position: 'absolute', bottom: '-16px', left: '50%', transform: 'translateX(-50%)',
+        width: '200px', height: '50px',
+        background: 'radial-gradient(ellipse, rgba(255,255,255,0.12), transparent 70%)',
+        filter: 'blur(18px)', pointerEvents: 'none',
+      }} />
+    </div>
+  );
+}
+
+// ─── Verification timeline ───────────────────────────────────────────────────
+function VerificationTimeline({ panDone, aadhaarDone }) {
+  const bothDone = panDone && aadhaarDone;
+  const statuses = [panDone || aadhaarDone, bothDone, bothDone, false];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      {TIMELINE_STEPS.map((step, i) => (
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: i * 0.07, type: 'spring', stiffness: 320, damping: 28 }}
+          style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+            <motion.div
+              animate={{ background: statuses[i] ? '#10b981' : 'rgba(0,0,0,0.06)' }}
+              transition={{ duration: 0.3 }}
+              style={{
+                width: '20px', height: '20px', borderRadius: '50%',
+                border: statuses[i] ? 'none' : '2px solid rgba(0,0,0,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {statuses[i] && <Check style={{ width: 10, height: 10, color: 'white' }} />}
+            </motion.div>
+            {i < TIMELINE_STEPS.length - 1 && (
+              <div style={{
+                width: '1.5px', height: '22px', margin: '2px 0',
+                background: statuses[i] ? 'rgba(16,185,129,0.3)' : 'rgba(0,0,0,0.07)',
+                transition: 'background 0.3s',
+              }} />
+            )}
+          </div>
+          <p style={{
+            fontSize: '13px',
+            color: statuses[i] ? '#10b981' : '#94a3b8',
+            fontWeight: statuses[i] ? 500 : 400,
+            paddingTop: '1px',
+            paddingBottom: i < TIMELINE_STEPS.length - 1 ? '20px' : '0',
+            transition: 'color 0.3s',
+          }}>
+            {step}
+          </p>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+// ─── EditableField (light theme) ────────────────────────────────────────────
+function EditableField({ label, value, onChange }) {
+  const [focused, setFocused] = useState(false);
+  const floated = focused || !!value;
+
+  return (
+    <div style={{
+      position: 'relative', height: '56px', borderRadius: '12px',
+      background: focused ? '#ffffff' : '#f8fafc',
+      border: `1.5px solid ${focused ? '#0A58F5' : 'rgba(0,0,0,0.09)'}`,
+      boxShadow: focused ? '0 0 0 3px rgba(10,88,245,0.08)' : 'none',
+      transition: 'all 0.2s ease',
+    }}>
+      <label style={{
+        position: 'absolute', left: '14px',
+        top: floated ? '8px' : '50%',
+        transform: floated ? 'translateY(0) scale(0.78)' : 'translateY(-50%)',
+        transformOrigin: 'left',
+        fontSize: '13px',
+        color: focused ? '#0A58F5' : '#94a3b8',
+        fontWeight: 500, transition: 'all 0.2s ease', pointerEvents: 'none',
+      }}>
+        {label}
+      </label>
       <input
         type="text"
         value={value || ''}
         onChange={e => onChange(e.target.value)}
-        placeholder={placeholder || `Enter ${label.toLowerCase()}`}
-        className="w-full rounded-xl px-4 py-2.5 text-sm text-white/90 outline-none transition-all duration-200"
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.09)',
+          position: 'absolute', bottom: '8px', left: '14px', right: '14px',
+          background: 'transparent', border: 'none', outline: 'none',
+          fontSize: '14px', fontWeight: 500, color: '#0A0A0A', fontFamily: 'inherit',
         }}
-        onFocus={e => { e.target.style.borderColor = 'rgba(99,102,241,0.5)'; e.target.style.background = 'rgba(255,255,255,0.06)'; }}
-        onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.09)'; e.target.style.background = 'rgba(255,255,255,0.04)'; }}
       />
     </div>
   );
 }
 
+// ─── Demo modal ─────────────────────────────────────────────────────────────
+function DemoModal({ onClose, onConfirm }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.9, y: 20, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#ffffff', borderRadius: '28px', padding: '44px 40px',
+          maxWidth: '420px', width: '100%',
+          boxShadow: '0 40px 100px rgba(0,0,0,0.18)', textAlign: 'center',
+        }}
+      >
+        <div style={{
+          width: '68px', height: '68px', borderRadius: '20px',
+          background: 'rgba(245,158,11,0.1)', border: '1.5px solid rgba(245,158,11,0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 24px', fontSize: '30px',
+        }}>⚡</div>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#0A0A0A', marginBottom: '12px' }}>Demo Mode</h2>
+        <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.65, marginBottom: '8px' }}>
+          You are bypassing identity verification.
+        </p>
+        <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.65, marginBottom: '0' }}>
+          This option exists solely for hackathon demonstrations and will not be available in production.
+        </p>
+        <p style={{ fontSize: '15px', fontWeight: 600, color: '#0A0A0A', margin: '24px 0' }}>Continue?</p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+            onClick={onClose}
+            style={{
+              flex: 1, height: '52px', borderRadius: '100px',
+              border: '1.5px solid rgba(0,0,0,0.12)', background: 'transparent',
+              fontWeight: 600, fontSize: '14px', color: '#374151', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >Cancel</motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02, boxShadow: '0 12px 32px rgba(10,88,245,0.38)' }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onConfirm}
+            style={{
+              flex: 1, height: '52px', borderRadius: '100px',
+              background: 'linear-gradient(135deg, #021B79, #0A58F5)',
+              border: 'none', fontWeight: 600, fontSize: '14px', color: '#ffffff',
+              cursor: 'pointer', fontFamily: 'inherit',
+              boxShadow: '0 8px 24px rgba(10,88,245,0.28)',
+            }}
+          >Continue in Demo Mode</motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── DocumentZone (light theme, all logic preserved) ────────────────────────
 function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }) {
   const [status, setStatus] = useState('idle');
   const [preview, setPreview] = useState(null);
@@ -39,21 +298,22 @@ function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }
   const onDrop = useCallback(async (files) => {
     const file = files[0];
     if (!file) return;
-    setPreview(URL.createObjectURL(file));
+    const previewUrl = URL.createObjectURL(file);
+    setPreview(previewUrl);
     setStatus('processing');
     setProgress(10);
 
+    let progressInterval = null;
     try {
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setProgress(p => Math.min(p + 8, 88));
       }, 300);
 
       // DYNAMIC IMPORT: Prevents Vite top-level crashes and bundle evaluation errors
       const TesseractModule = await import('tesseract.js');
-      
       let text = '';
 
-      // Gracefully handle both v5 and v4 API structures depending on what Vite resolves
+      // Gracefully handle both v5 and v4 API structures
       if (typeof TesseractModule.createWorker === 'function') {
         const worker = await TesseractModule.createWorker('eng');
         const result = await worker.recognize(file);
@@ -67,6 +327,7 @@ function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }
       }
 
       clearInterval(progressInterval);
+      progressInterval = null;
       setProgress(100);
 
       const res = await processKYC(text, type);
@@ -75,17 +336,15 @@ function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }
         setStatus('done');
         toast.success(`${label} verified!`);
       } else {
-        throw new Error('Processing failed');
+        throw new Error(res.error || 'Processing failed');
       }
-    } catch (_) {
-      // Fallback works flawlessly for the MVP without breaking the flow
-      setProgress(100);
-      const mockData = type === 'pan'
-        ? { panNumber: `ABCDE${Math.floor(Math.random() * 9000 + 1000)}F`, verified: true, documentType: 'PAN Card' }
-        : { aadhaarNumber: '[Aadhaar Redacted]', verified: true, documentType: 'Aadhaar Card' };
-      onExtracted(mockData);
-      setStatus('done');
-      toast.success(`${label} processed!`);
+    } catch (err) {
+      if (progressInterval) clearInterval(progressInterval);
+      URL.revokeObjectURL(previewUrl);
+      setPreview(null);
+      setProgress(0);
+      setStatus('idle');
+      toast.error(err?.message || `Could not verify ${label}. Please upload a valid ${type === 'pan' ? 'PAN card' : 'Aadhaar card'} image.`);
     }
   }, [type, label, onExtracted]);
 
@@ -96,149 +355,179 @@ function DocumentZone({ type, label, icon, accentColor, onExtracted, extracted }
     disabled: status === 'processing' || status === 'done',
   });
 
+  const isDone = status === 'done';
+  const isProcessing = status === 'processing';
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={spring}
-      className="space-y-3"
+      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
     >
-      {/* Label row */}
-      <div className="flex items-center gap-2.5">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0`}
-          style={{ background: `${accentColor}18`, border: `1px solid ${accentColor}30` }}
-        >
-          {icon}
-        </div>
-        <h3 className="font-semibold text-white text-sm">{label}</h3>
-        <AnimatePresence>
-          {status === 'done' && (
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={spring}
-              className="ml-auto"
-            >
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Drop zone */}
-      <div
+      <motion.div
         {...getRootProps()}
-        data-active={isDragActive || undefined}
-        data-done={status === 'done' || undefined}
-        data-disabled={status === 'processing' || status === 'done' || undefined}
-        className="drop-zone relative overflow-hidden min-h-[160px]"
-        style={status === 'done' ? { borderColor: 'rgba(16,185,129,0.35)', background: 'rgba(16,185,129,0.04)' } : {}}
+        whileHover={status === 'idle' ? {
+          scale: 1.015, y: -2,
+          boxShadow: `0 12px 40px rgba(0,0,0,0.09), 0 0 0 2px ${accentColor}28`,
+        } : {}}
+        transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+        style={{
+          borderRadius: '20px',
+          border: `2px ${isDone ? 'solid' : 'dashed'} ${
+            isDone ? 'rgba(16,185,129,0.28)' :
+            isDragActive ? accentColor :
+            'rgba(0,0,0,0.1)'
+          }`,
+          background: isDone ? 'rgba(16,185,129,0.04)' : isDragActive ? `${accentColor}06` : '#ffffff',
+          cursor: isProcessing || isDone ? 'default' : 'pointer',
+          overflow: 'hidden',
+          boxShadow: isDragActive
+            ? `0 0 0 4px ${accentColor}18, 0 8px 32px rgba(0,0,0,0.07)`
+            : '0 2px 12px rgba(0,0,0,0.05)',
+          transition: 'border-color 0.2s, background 0.2s',
+        }}
       >
         <input {...getInputProps()} />
 
-        {/* Image preview overlay */}
-        {preview && status !== 'idle' && (
-          <div className="absolute inset-0">
-            <img
-              src={preview}
-              alt="preview"
-              className="w-full h-full object-cover"
-              style={{ opacity: status === 'done' ? 0.12 : 0.18 }}
-            />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(6,6,9,0.3), rgba(6,6,9,0.7))' }} />
+        {/* Card header */}
+        <div style={{
+          padding: '16px 20px',
+          borderBottom: `1px solid ${isDone ? 'rgba(16,185,129,0.1)' : 'rgba(0,0,0,0.05)'}`,
+          display: 'flex', alignItems: 'center', gap: '12px',
+          background: isDone ? 'rgba(16,185,129,0.03)' : 'rgba(0,0,0,0.01)',
+        }}>
+          <div style={{
+            width: '38px', height: '38px', borderRadius: '11px', flexShrink: 0,
+            background: `${accentColor}14`, border: `1.5px solid ${accentColor}28`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {icon}
           </div>
-        )}
-
-        <div className="relative z-10 flex flex-col items-center justify-center p-8 h-full text-center min-h-[160px]">
-          <AnimatePresence mode="wait">
-            {status === 'idle' && (
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 600, fontSize: '14px', color: '#0A0A0A', marginBottom: '2px' }}>{label}</p>
+            <p style={{ fontSize: '11px', color: '#94a3b8' }}>JPG, PNG or WebP · Max 10MB</p>
+          </div>
+          <AnimatePresence>
+            {isDone && (
               <motion.div
-                key="idle"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="flex flex-col items-center gap-3"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 22 }}
+                style={{
+                  width: '30px', height: '30px', borderRadius: '50%',
+                  background: 'rgba(16,185,129,0.12)', border: '1.5px solid rgba(16,185,129,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
               >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                  style={{ background: `${accentColor}12`, border: `1px solid ${accentColor}22` }}
-                >
-                  <Upload className="w-5 h-5" style={{ color: accentColor }} />
-                </div>
-                <div>
-                  <p className="text-sm text-white/60 font-medium">
-                    {isDragActive ? 'Drop here' : 'Drag & drop or click to upload'}
-                  </p>
-                  <p className="text-xs text-white/30 mt-1">JPG, PNG or WebP · Max 10MB</p>
-                </div>
-              </motion.div>
-            )}
-
-            {status === 'processing' && (
-              <motion.div
-                key="processing"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex flex-col items-center gap-4 w-full max-w-xs"
-              >
-                <Loader className="w-8 h-8 text-indigo-400 animate-spin" />
-                <div className="text-center">
-                  <p className="text-sm text-white/70 font-medium mb-3">Extracting via OCR…</p>
-                  <div className="w-full h-1.5 bg-white/[0.08] rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ background: `linear-gradient(90deg, ${accentColor}, #c084fc)` }}
-                      initial={{ width: '0%' }}
-                      animate={{ width: `${progress}%` }}
-                      transition={{ ease: 'easeOut', duration: 0.5 }}
-                    />
-                  </div>
-                  <p className="text-xs text-white/30 mt-2">{progress}%</p>
-                </div>
-              </motion.div>
-            )}
-
-            {status === 'done' && (
-              <motion.div
-                key="done"
-                initial={{ opacity: 0, scale: 0.88 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={spring}
-                className="flex flex-col items-center gap-3 w-full"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ ...spring, delay: 0.1 }}
-                  className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center"
-                >
-                  <CheckCircle className="w-6 h-6 text-emerald-400" />
-                </motion.div>
-                <p className="text-sm font-semibold text-emerald-300">Verified</p>
-                {extracted && (
-                  <div className="w-full max-w-xs space-y-1.5 mt-1">
-                    {Object.entries(extracted)
-                      .filter(([k, v]) => v && k !== 'verified' && k !== 'documentType')
-                      .map(([k, v]) => (
-                        <div key={k} className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-white/[0.04]">
-                          <span className="text-[11px] text-white/40 capitalize">
-                            {k.replace(/([A-Z])/g, ' $1').trim()}
-                          </span>
-                          <span className="text-[11px] text-white/80 font-mono font-medium">{String(v)}</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
+                <Check style={{ width: 14, height: 14, color: '#10b981' }} />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-      </div>
+
+        {/* Card body */}
+        <div style={{ padding: '24px', minHeight: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+          {/* Preview overlay */}
+          {preview && status !== 'idle' && (
+            <div style={{ position: 'absolute', inset: 0 }}>
+              <img src={preview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isDone ? 0.06 : 0.12 }} />
+              <div style={{ position: 'absolute', inset: 0, background: isDone ? 'rgba(240,253,244,0.92)' : 'rgba(255,255,255,0.88)' }} />
+            </div>
+          )}
+
+          <div style={{ position: 'relative', zIndex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <AnimatePresence mode="wait">
+              {status === 'idle' && (
+                <motion.div key="idle"
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}
+                >
+                  <div style={{
+                    width: '52px', height: '52px', borderRadius: '16px',
+                    background: `${accentColor}10`, border: `1.5px solid ${accentColor}20`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Upload style={{ width: 22, height: 22, color: accentColor }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '14px', fontWeight: 500, color: '#374151', marginBottom: '4px' }}>
+                      {isDragActive ? 'Drop here' : 'Drag & drop or click to upload'}
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#9ca3af' }}>Accepts JPG, PNG, WebP</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {status === 'processing' && (
+                <motion.div key="processing"
+                  initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', width: '100%', maxWidth: '240px', textAlign: 'center' }}
+                >
+                  <Loader style={{ width: 28, height: 28, color: accentColor }} className="animate-spin" />
+                  <div style={{ width: '100%' }}>
+                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '10px' }}>Extracting via OCR…</p>
+                    <div style={{ width: '100%', height: '4px', borderRadius: '100px', background: 'rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+                      <motion.div
+                        initial={{ width: '0%' }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ ease: 'easeOut', duration: 0.5 }}
+                        style={{ height: '100%', borderRadius: '100px', background: `linear-gradient(90deg, ${accentColor}, #a78bfa)` }}
+                      />
+                    </div>
+                    <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px' }}>{progress}%</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {isDone && (
+                <motion.div key="done"
+                  initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' }}
+                >
+                  <motion.div
+                    initial={{ scale: 0 }} animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 22, delay: 0.1 }}
+                    style={{
+                      width: '48px', height: '48px', borderRadius: '50%',
+                      background: 'rgba(16,185,129,0.12)', border: '2px solid rgba(16,185,129,0.3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    <CheckCircle style={{ width: 22, height: 22, color: '#10b981' }} />
+                  </motion.div>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#10b981' }}>Verified</p>
+                  {extracted && (
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                      {Object.entries(extracted)
+                        .filter(([k, v]) => v && k !== 'verified' && k !== 'documentType')
+                        .map(([k, v]) => (
+                          <div key={k} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '6px 12px', borderRadius: '8px', background: 'rgba(16,185,129,0.06)',
+                          }}>
+                            <span style={{ fontSize: '11px', color: '#6b7280', textTransform: 'capitalize' }}>
+                              {k.replace(/([A-Z])/g, ' $1').trim()}
+                            </span>
+                            <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, fontFamily: 'monospace' }}>
+                              {String(v)}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
 
+// ─── Main KYC page ───────────────────────────────────────────────────────────
 export default function KYC() {
   const navigate = useNavigate();
   const { profile, getElapsedTime } = useChatStore();
@@ -246,10 +535,10 @@ export default function KYC() {
   const [aadhaarData, setAadhaarData] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [reviewData, setReviewData] = useState({});
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
   const bothVerified = panData?.verified && aadhaarData?.verified;
 
-  // Pre-fill editable review when both docs verified
   useEffect(() => {
     if (bothVerified) {
       setReviewData({
@@ -276,13 +565,18 @@ export default function KYC() {
         profile: mergedProfile,
         kycData: {
           panNumber: reviewData.panNumber || panData?.panNumber,
+          panName: panData?.name || null,
+          panDob: panData?.dob || null,
           aadhaarNumber: reviewData.aadhaarNumber || aadhaarData?.aadhaarNumber,
+          aadhaarName: aadhaarData?.name || null,
+          aadhaarDob: aadhaarData?.dob || null,
+          aadhaarGender: aadhaarData?.gender || null,
         },
         onboardingTime: getElapsedTime ? getElapsedTime() : 120,
         sessionId: Date.now().toString(),
       });
       if (res.success) {
-        navigate('/success', { state: { accountData: res.data } });
+        navigate('/success', { state: { accountData: res.data }, replace: true });
       }
     } catch (_) {
       toast.error('Account creation failed. Please try again.');
@@ -291,230 +585,327 @@ export default function KYC() {
     }
   };
 
+  const handleDemoSkip = async () => {
+    setShowDemoModal(false);
+    setIsCreating(true);
+    try {
+      const mergedProfile = {
+        ...(profile || { category: 'salaried', goals: 'Savings' }),
+        name: profile?.name || 'Demo User',
+        occupation: profile?.occupation || 'Professional',
+        income: profile?.income || '₹50K-₹1L',
+      };
+      const res = await createAccount({
+        profile: mergedProfile,
+        kycData: {
+          panNumber: 'DEMOKYC001P',
+          panName: profile?.name || 'Demo User',
+          panDob: '01/01/1990',
+          aadhaarNumber: '0000 0000 0000',
+          aadhaarName: profile?.name || 'Demo User',
+          aadhaarDob: '01/01/1990',
+          aadhaarGender: 'M',
+        },
+        onboardingTime: getElapsedTime ? getElapsedTime() : 30,
+        sessionId: Date.now().toString(),
+      });
+      if (res.success) {
+        navigate('/success', { state: { accountData: res.data }, replace: true });
+      }
+    } catch (_) {
+      toast.error('Demo skip failed. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#060609] relative overflow-hidden">
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="orb w-[400px] h-[400px] bg-indigo-700" style={{ top: '-100px', right: '-80px' }} />
-        <div className="orb w-[300px] h-[300px] bg-emerald-800" style={{ bottom: '-80px', left: '-50px' }} />
-      </div>
+    <div style={{
+      display: 'flex', minHeight: '100vh',
+      fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+      background: '#EEF1F8',
+    }}>
+      <style>{KYC_CSS}</style>
 
-      {/* ── Nav header ─────────────────────────────── */}
-      <motion.header
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-20 nav-glass px-4 py-3.5 flex-shrink-0 mb-0"
+      {/* ── Left panel (sticky sidebar) ──────────────────────────────── */}
+      <div
+        className="hidden lg:flex"
+        style={{
+          width: '40%', minWidth: '340px',
+          position: 'sticky', top: 0, height: '100vh', alignSelf: 'flex-start',
+          background: 'linear-gradient(135deg, #021B79 0%, #0534A6 50%, #0A58F5 100%)',
+          flexDirection: 'column', padding: '44px 40px',
+          overflow: 'hidden',
+        }}
       >
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/chat')}
-              className="w-8 h-8 rounded-xl bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white/50 hover:text-white/90 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </motion.button>
+        {/* Glow orbs */}
+        <div style={{ position: 'absolute', top: '-80px', right: '-60px', width: '280px', height: '280px', borderRadius: '50%', background: 'rgba(10,88,245,0.4)', filter: 'blur(80px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-60px', left: '-40px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(2,27,121,0.6)', filter: 'blur(60px)', pointerEvents: 'none' }} />
 
-            <button
-              onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="flex items-center gap-2.5 hover:opacity-75 transition-opacity"
-            >
-              <div
-                className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center"
-                style={{ boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
-              >
-                <Zap className="w-3.5 h-3.5 text-white" />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-white leading-tight">HyperOne</p>
-                <p className="text-[11px] text-white/40">Identity Verification</p>
-              </div>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-            style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="text-[11px] font-medium text-emerald-300">Step 2 of 2</span>
-          </div>
-        </div>
-      </motion.header>
-
-      <div className="relative z-10 max-w-2xl mx-auto px-5 py-8">
-
-        {/* ── Security badge ──────────────────────────── */}
+        {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="glass-card rounded-2xl p-4 mb-6 flex items-center gap-4"
+          transition={{ delay: 0.08 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}
         >
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Zap style={{ width: 16, height: 16, color: '#ffffff' }} />
           </div>
-          <div>
-            <p className="text-sm font-semibold text-white">Bank-grade Security</p>
-            <p className="text-xs text-white/45 mt-0.5">Documents are processed locally via OCR · No data stored or transmitted</p>
-          </div>
+          <span style={{ fontSize: '17px', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.3px' }}>HyperOne</span>
         </motion.div>
 
-        {/* ── Profile summary ─────────────────────────── */}
-        {profile && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="glass-card rounded-2xl p-4 mb-6 flex items-center gap-4"
-          >
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-sm flex-shrink-0"
-              style={{ boxShadow: '0 4px 14px rgba(99,102,241,0.35)' }}
-            >
-              {(profile.name || 'U').charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <p className="font-semibold text-white text-sm">{profile.name}</p>
-              <p className="text-xs text-white/45 capitalize mt-0.5">{profile.occupation} · {profile.category} segment</p>
-            </div>
-            <div className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-full glass text-xs text-indigo-300"
-              style={{ borderColor: 'rgba(99,102,241,0.2)' }}
-            >
-              <Sparkles className="w-3 h-3" />
-              Profile Ready
-            </div>
-          </motion.div>
-        )}
+        {/* Floating illustrations */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          style={{ flex: 1, display: 'flex', alignItems: 'center' }}
+        >
+          <FloatingIllustrations />
+        </motion.div>
 
-        {/* ── Document Uploads ────────────────────────── */}
-        <div className="space-y-5 mb-7">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <DocumentZone
-              type="pan"
-              label="PAN Card"
-              icon={<FileText className="w-3.5 h-3.5 text-amber-400" />}
-              accentColor="#f59e0b"
-              onExtracted={setPanData}
-              extracted={panData}
-            />
-          </motion.div>
+        {/* Headline + copy + features */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.14 }}
+          style={{ flexShrink: 0, position: 'relative', zIndex: 1 }}
+        >
+          <h1 style={{
+            fontSize: 'clamp(34px, 3.5vw, 52px)', fontWeight: 800, lineHeight: 1.08,
+            color: '#ffffff', letterSpacing: '-1.5px', marginBottom: '14px',
+          }}>
+            Identity,<br />Verified.
+          </h1>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '290px', marginBottom: '28px' }}>
+            Verify your identity securely using AI-powered document analysis and RBI-compliant verification.
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.22 }}
-          >
-            <DocumentZone
-              type="aadhaar"
-              label="Aadhaar Card"
-              icon={<ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />}
-              accentColor="#6366f1"
-              onExtracted={setAadhaarData}
-              extracted={aadhaarData}
-            />
-          </motion.div>
-        </div>
-
-        {/* ── Completion indicator + editable profile review ── */}
-        <AnimatePresence>
-          {bothVerified && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={spring}
-              className="space-y-4 mb-6"
-            >
-              {/* KYC complete banner */}
-              <div
-                className="flex items-center gap-3 glass-card rounded-2xl p-4"
-                style={{ borderColor: 'rgba(16,185,129,0.22)', boxShadow: '0 0 30px rgba(16,185,129,0.08)' }}
-              >
-                <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-white">Documents Verified</p>
-                  <p className="text-xs text-white/45">Review and confirm your details below before completing.</p>
-                </div>
-              </div>
-
-              {/* Editable profile review */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {FEATURES.map((f, i) => (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, ...spring }}
-                className="glass-card rounded-2xl p-5"
+                key={f.label}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.32 + i * 0.07, type: 'spring', stiffness: 320, damping: 28 }}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
               >
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                  <h3 className="text-sm font-semibold text-white">Review Your Details</h3>
-                  <span className="ml-auto text-[11px] text-white/35">All fields editable</span>
+                <div style={{
+                  width: '26px', height: '26px', borderRadius: '8px', flexShrink: 0,
+                  background: `${f.color}18`, border: `1px solid ${f.color}30`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: f.color,
+                }}>
+                  {f.icon}
                 </div>
-                <div className="space-y-3">
-                  <EditableField
-                    label="Full Name"
-                    value={reviewData.name}
-                    onChange={v => setReviewData(d => ({ ...d, name: v }))}
-                    placeholder="Your full name"
-                  />
-                  <EditableField
-                    label="PAN Number"
-                    value={reviewData.panNumber}
-                    onChange={v => setReviewData(d => ({ ...d, panNumber: v }))}
-                    placeholder="e.g. ABCDE1234F"
-                  />
-                  <EditableField
-                    label="Aadhaar (Masked)"
-                    value={reviewData.aadhaarNumber}
-                    onChange={v => setReviewData(d => ({ ...d, aadhaarNumber: v }))}
-                    placeholder="xxxx xxxx xxxx"
-                  />
+                <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>{f.label}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── Right panel ──────────────────────────────────────────────── */}
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+        padding: 'clamp(24px, 4vw, 56px)',
+        paddingTop: 'clamp(40px, 6vh, 72px)',
+        paddingBottom: 'clamp(40px, 6vh, 72px)',
+      }}>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 28 }}
+          style={{
+            maxWidth: '620px', width: '100%',
+            background: 'rgba(255,255,255,0.93)',
+            backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)',
+            borderRadius: '40px',
+            padding: 'clamp(28px, 4vw, 52px)',
+            boxShadow: '0 40px 100px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.7)',
+          }}
+        >
+          {/* Step indicator */}
+          <div style={{ marginBottom: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#0A58F5', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Step 2 of 3</span>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>Identity Verification</span>
+            </div>
+            <div style={{ height: '3px', borderRadius: '100px', background: '#f1f5f9', overflow: 'hidden' }}>
+              <motion.div
+                initial={{ width: '33%' }}
+                animate={{ width: bothVerified ? '100%' : '66%' }}
+                transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+                style={{ height: '100%', borderRadius: '100px', background: 'linear-gradient(90deg, #021B79, #0A58F5)' }}
+              />
+            </div>
+          </div>
+
+          {/* Heading */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} style={{ marginBottom: '28px' }}>
+            <h2 style={{ fontSize: 'clamp(24px, 3vw, 32px)', fontWeight: 800, color: '#0A0A0A', letterSpacing: '-0.8px', marginBottom: '8px', lineHeight: 1.15 }}>
+              Verify your identity.
+            </h2>
+            <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.6 }}>
+              Upload your documents to continue onboarding.
+            </p>
+          </motion.div>
+
+          {/* Profile summary */}
+          {profile && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '14px 18px', borderRadius: '16px',
+                background: 'rgba(10,88,245,0.04)', border: '1px solid rgba(10,88,245,0.1)',
+                marginBottom: '28px',
+              }}
+            >
+              <div style={{
+                width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
+                background: 'linear-gradient(135deg, #021B79, #0A58F5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '15px', fontWeight: 700, color: '#ffffff',
+                boxShadow: '0 4px 12px rgba(10,88,245,0.3)',
+              }}>
+                {(profile.name || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: 600, fontSize: '14px', color: '#0A0A0A' }}>{profile.name}</p>
+                <p style={{ fontSize: '12px', color: '#64748b', textTransform: 'capitalize' }}>{profile.occupation} · {profile.category} segment</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 11px', borderRadius: '100px', background: 'rgba(10,88,245,0.08)', border: '1px solid rgba(10,88,245,0.15)', flexShrink: 0 }}>
+                <Sparkles style={{ width: 11, height: 11, color: '#0A58F5' }} />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#0A58F5' }}>Profile Ready</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Upload zones */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '28px' }}>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}>
+              <DocumentZone
+                type="pan"
+                label="PAN Card"
+                icon={<FileText style={{ width: 16, height: 16, color: '#f59e0b' }} />}
+                accentColor="#f59e0b"
+                onExtracted={setPanData}
+                extracted={panData}
+              />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <DocumentZone
+                type="aadhaar"
+                label="Aadhaar Card"
+                icon={<ShieldCheck style={{ width: 16, height: 16, color: '#0A58F5' }} />}
+                accentColor="#0A58F5"
+                onExtracted={setAadhaarData}
+                extracted={aadhaarData}
+              />
+            </motion.div>
+          </div>
+
+          {/* Review details (after both verified) */}
+          <AnimatePresence>
+            {bothVerified && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                style={{
+                  borderRadius: '20px', background: 'rgba(16,185,129,0.04)',
+                  border: '1px solid rgba(16,185,129,0.15)',
+                  padding: '24px', marginBottom: '24px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                  <CheckCircle style={{ width: 15, height: 15, color: '#10b981' }} />
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#0A0A0A' }}>Documents Verified — Review Your Details</h3>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#94a3b8' }}>Editable</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <EditableField label="Full Name" value={reviewData.name} onChange={v => setReviewData(d => ({ ...d, name: v }))} />
+                  <EditableField label="PAN Number" value={reviewData.panNumber} onChange={v => setReviewData(d => ({ ...d, panNumber: v }))} />
+                  <EditableField label="Aadhaar (Masked)" value={reviewData.aadhaarNumber} onChange={v => setReviewData(d => ({ ...d, aadhaarNumber: v }))} />
                   {(profile?.occupation || reviewData.occupation) && (
-                    <EditableField
-                      label="Occupation"
-                      value={reviewData.occupation}
-                      onChange={v => setReviewData(d => ({ ...d, occupation: v }))}
-                      placeholder="Your occupation"
-                    />
+                    <EditableField label="Occupation" value={reviewData.occupation} onChange={v => setReviewData(d => ({ ...d, occupation: v }))} />
                   )}
                   {(profile?.income || reviewData.income) && (
-                    <EditableField
-                      label="Monthly Income"
-                      value={reviewData.income}
-                      onChange={v => setReviewData(d => ({ ...d, income: v }))}
-                      placeholder="e.g. ₹50K–₹1L"
-                    />
+                    <EditableField label="Monthly Income" value={reviewData.income} onChange={v => setReviewData(d => ({ ...d, income: v }))} />
                   )}
                 </div>
               </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
 
-        {/* ── Complete button ──────────────────────────── */}
-        <motion.div
-          animate={{ opacity: bothVerified ? 1 : 0.45 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full"
-            disabled={!bothVerified || isCreating}
-            loading={isCreating}
+          {/* Verification timeline */}
+          <div style={{ marginBottom: '32px', padding: '20px 24px', borderRadius: '16px', background: '#f8fafc', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '16px' }}>Verification Steps</p>
+            <VerificationTimeline panDone={!!panData?.verified} aadhaarDone={!!aadhaarData?.verified} />
+          </div>
+
+          {/* Primary CTA */}
+          <motion.button
+            whileHover={bothVerified && !isCreating ? { scale: 1.02, boxShadow: '0 16px 48px rgba(10,88,245,0.42)' } : {}}
+            whileTap={bothVerified && !isCreating ? { scale: 0.98 } : {}}
             onClick={handleCompleteOnboarding}
+            disabled={!bothVerified || isCreating}
+            style={{
+              width: '100%', minHeight: '64px', borderRadius: '100px',
+              background: !bothVerified || isCreating ? '#e5e7eb' : 'linear-gradient(135deg, #021B79, #0A58F5)',
+              border: 'none',
+              color: !bothVerified || isCreating ? '#9ca3af' : '#ffffff',
+              fontSize: '16px', fontWeight: 700,
+              cursor: !bothVerified || isCreating ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+              boxShadow: bothVerified && !isCreating ? '0 8px 32px rgba(10,88,245,0.3)' : 'none',
+              fontFamily: 'inherit',
+              transition: 'background 0.25s, box-shadow 0.25s, color 0.25s',
+              marginBottom: '14px',
+            }}
           >
-            {isCreating ? 'Creating Your Account…' : 'Complete Onboarding & Open Account'}
-          </Button>
-        </motion.div>
+            {isCreating ? (
+              <><Loader style={{ width: 18, height: 18 }} className="animate-spin" />Creating Your Account…</>
+            ) : (
+              <><ShieldCheck style={{ width: 18, height: 18 }} />Verify &amp; Continue<ArrowRight style={{ width: 18, height: 18 }} /></>
+            )}
+          </motion.button>
 
-        <p className="text-xs text-white/20 text-center mt-5">
-          By proceeding you agree to SBI's Terms of Service · Built for SBI HackFest 2026
-        </p>
+          {/* Demo skip */}
+          <motion.button
+            whileHover={{ opacity: 0.75, borderColor: 'rgba(0,0,0,0.22)' }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => !isCreating && setShowDemoModal(true)}
+            style={{
+              width: '100%', height: '48px', borderRadius: '100px',
+              background: 'transparent', border: '1.5px dashed rgba(0,0,0,0.12)',
+              color: '#94a3b8', fontSize: '13px', fontWeight: 500,
+              cursor: isCreating ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              fontFamily: 'inherit', transition: 'border-color 0.2s, color 0.2s',
+            }}
+          >
+            <Zap style={{ width: 14, height: 14 }} />
+            Skip Verification (Demo Only)
+          </motion.button>
+
+          <p style={{ fontSize: '11px', color: '#cbd5e1', textAlign: 'center', marginTop: '20px' }}>
+            By proceeding you agree to SBI's Terms of Service · Built for SBI HackFest 2026
+          </p>
+        </motion.div>
       </div>
+
+      {/* Demo modal */}
+      <AnimatePresence>
+        {showDemoModal && (
+          <DemoModal onClose={() => setShowDemoModal(false)} onConfirm={handleDemoSkip} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

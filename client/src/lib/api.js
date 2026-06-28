@@ -7,7 +7,9 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(config => {
-  const token = localStorage.getItem('hyperone_customer_token');
+  const customerToken = localStorage.getItem('hyperone_customer_token');
+  const adminToken = sessionStorage.getItem('hyperone_admin_token');
+  const token = customerToken || adminToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -15,7 +17,7 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   res => res.data,
   err => {
-    const message = err.response?.data?.error || err.message || 'Something went wrong';
+    const message = err.response?.data?.error || 'Something went wrong';
     return Promise.reject(new Error(message));
   }
 );
@@ -48,12 +50,15 @@ export async function loginCustomer(customerId, mpin) {
   return api.post('/auth/login', { customerId, mpin });
 }
 
+export async function loginAdmin(username, password) {
+  return api.post('/auth/admin-login', { username, password });
+}
+
 export async function getMyProfile() {
   return api.get('/auth/me');
 }
 
 // Copilot streaming — returns a ReadableStreamDefaultReader
-// Usage: const reader = await streamCopilotMessage(messages); then read SSE chunks
 export async function streamCopilotMessage(messages) {
   const token = localStorage.getItem('hyperone_customer_token');
   const res = await fetch('/api/copilot/chat', {

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Zap } from 'lucide-react';
 
 export default function TypingIndicator() {
   return (
@@ -6,42 +7,40 @@ export default function TypingIndicator() {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
-      transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="flex items-end gap-2.5 pr-12"
+      transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}
     >
-      {/* Avatar — matches ChatBubble AI avatar */}
-      <div
-        className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0 self-end"
-        style={{
-          background: 'linear-gradient(135deg, #5046e4, #7c3aed)',
-          boxShadow: '0 2px 8px rgba(80,70,228,0.22)',
-        }}
-      >
-        H
+      <div style={{
+        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+        background: 'linear-gradient(135deg, #0A1F6E, #0A58F5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 4px 16px rgba(10,88,245,0.28)',
+      }}>
+        <Zap style={{ width: 18, height: 18, color: 'white' }} />
       </div>
 
-      {/* Bubble — matches .chat-bubble-ai light style */}
-      <div
-        className="px-[18px] py-[14px]"
-        style={{
-          background: 'rgba(255,255,255,0.97)',
-          border: '1px solid rgba(0,0,0,0.07)',
-          borderRadius: '20px 20px 20px 6px',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
-        }}
-      >
-        <div className="flex gap-[5px] items-center" style={{ height: '1rem' }}>
+      <div style={{ paddingTop: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#0A58F5', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            HyperOne AI
+          </span>
+          <motion.span
+            animate={{ opacity: [1, 0.4, 1] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ width: 4, height: 4, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }}
+          />
+          <span style={{ fontSize: 11, color: '#8e8e93' }}>Thinking…</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {[0, 1, 2].map(i => (
-            <span
+            <motion.span
               key={i}
+              animate={{ y: [0, -6, 0], opacity: [0.4, 1, 0.4] }}
+              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.16, ease: 'easeInOut' }}
               style={{
-                display: 'inline-block',
-                width: 5,
-                height: 5,
-                borderRadius: '50%',
-                background: '#8e8e93',
-                animation: `typing-bounce 1.5s ease-in-out infinite`,
-                animationDelay: `${i * 0.18}s`,
+                display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #0A2A8A, #0A58F5)',
               }}
             />
           ))}

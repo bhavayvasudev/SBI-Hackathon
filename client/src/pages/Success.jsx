@@ -1,42 +1,75 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Copy, Download, Smartphone, Sparkles, Zap, Home, LayoutDashboard, KeyRound } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  CheckCircle, Copy, Download, Sparkles, Zap,
+  Home, LayoutDashboard, KeyRound, ShieldCheck,
+  TrendingUp, BarChart2, Cpu, Check, ArrowRight,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore.js';
 
-const COLORS = ['#6366f1', '#a855f7', '#ec4899', '#10b981', '#f59e0b', '#06b6d4'];
-const spring = { type: 'spring', stiffness: 280, damping: 26 };
+const SUC_CSS = `
+  @keyframes sucFloat1 {
+    0%, 100% { transform: perspective(600px) rotateY(-18deg) rotateX(6deg) translateY(0px); }
+    50%       { transform: perspective(600px) rotateY(-13deg) rotateX(3deg) translateY(-14px); }
+  }
+  @keyframes sucFloat2 {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50%       { transform: translateY(-18px) rotate(5deg); }
+  }
+  @keyframes sucFloat3 {
+    0%, 100% { transform: translateY(0px) rotate(-3deg); }
+    50%       { transform: translateY(-12px) rotate(2deg); }
+  }
+  @keyframes sucFloat4 {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50%       { transform: translateY(-10px) scale(1.05); }
+  }
+  @keyframes sucFloat5 {
+    0%, 100% { transform: translateY(0px) rotate(2deg); }
+    50%       { transform: translateY(-8px) rotate(-1deg); }
+  }
+  @keyframes ambPulse {
+    0%, 100% { opacity: 0.07; transform: scale(1); }
+    50%       { opacity: 0.12; transform: scale(1.06); }
+  }
+  .suc-f1 { animation: sucFloat1 6s ease-in-out infinite; will-change: transform; }
+  .suc-f2 { animation: sucFloat2 5.5s ease-in-out infinite 1.1s; will-change: transform; }
+  .suc-f3 { animation: sucFloat3 4.5s ease-in-out infinite 2.2s; will-change: transform; }
+  .suc-f4 { animation: sucFloat4 3.8s ease-in-out infinite 0.6s; will-change: transform; }
+  .suc-f5 { animation: sucFloat5 7s ease-in-out infinite 1.8s; will-change: transform; }
+`;
+
+const CONFETTI_COLORS = ['#1A56DB', '#1E3A8A', '#10b981', '#f59e0b', '#60a5fa', '#34d399'];
 
 function Confetti() {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {Array.from({ length: 50 }).map((_, i) => (
+    <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+      {Array.from({ length: 28 }).map((_, i) => (
         <motion.div
           key={i}
           initial={{
             x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1200),
-            y: -24,
-            rotate: 0,
-            opacity: 1,
-            scale: 0.8 + Math.random() * 0.6,
+            y: -24, rotate: 0, opacity: 1,
+            scale: 0.6 + Math.random() * 0.8,
           }}
           animate={{
             y: (typeof window !== 'undefined' ? window.innerHeight : 800) + 30,
             rotate: (Math.random() > 0.5 ? 1 : -1) * (180 + Math.random() * 360),
-            opacity: [1, 1, 0.8, 0],
+            opacity: [1, 1, 0.6, 0],
           }}
           transition={{
             duration: 3.5 + Math.random() * 2.5,
-            delay: Math.random() * 1.8,
+            delay: Math.random() * 2,
             ease: [0.25, 0.46, 0.45, 0.94],
           }}
           style={{
             position: 'absolute',
-            width: 7 + Math.random() * 7,
-            height: 7 + Math.random() * 7,
-            borderRadius: Math.random() > 0.45 ? '50%' : '2px',
-            backgroundColor: COLORS[Math.floor(Math.random() * COLORS.length)],
+            width: 6 + Math.random() * 8,
+            height: 6 + Math.random() * 8,
+            borderRadius: Math.random() > 0.4 ? '50%' : '2px',
+            backgroundColor: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
           }}
         />
       ))}
@@ -44,28 +77,143 @@ function Confetti() {
   );
 }
 
-function CopyableField({ label, value }) {
-  const copy = () => {
-    navigator.clipboard.writeText(value);
-    toast.success(`${label} copied!`);
-  };
+const CHECKS = [
+  { label: 'Account activated', color: '#34d399' },
+  { label: 'KYC verified', color: '#60a5fa' },
+  { label: 'RBI compliant', color: '#a78bfa' },
+  { label: 'AI Copilot enabled', color: '#fbbf24' },
+  { label: 'Bank-grade security', color: '#f472b6' },
+];
+
+function FloatingVisuals({ name }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-white/[0.055] last:border-0">
+    <div style={{ position: 'relative', flex: 1, width: '100%' }}>
+      {/* Glow behind card */}
+      <div style={{
+        position: 'absolute', left: '50%', bottom: '28%',
+        transform: 'translateX(-50%)',
+        width: 220, height: 130, borderRadius: '50%',
+        background: 'rgba(26,107,255,0.32)', filter: 'blur(44px)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Main debit card */}
+      <div className="suc-f1" style={{
+        position: 'absolute', left: '50%', bottom: '22%',
+        transform: 'translateX(-52%)',
+        width: 224, height: 140,
+        borderRadius: 18,
+        background: 'linear-gradient(140deg, #0A1F6E 0%, #0942CC 55%, #1A6BFF 100%)',
+        boxShadow: '0 32px 80px rgba(0,0,0,0.55), 0 8px 32px rgba(15,82,255,0.4), 0 0 0 1px rgba(255,255,255,0.14)',
+        padding: '18px 20px 16px',
+        overflow: 'hidden',
+      }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 75% 20%, rgba(255,255,255,0.22) 0%, transparent 60%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', right: -28, top: -28, width: 110, height: 110, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+          <div>
+            <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>HyperOne</p>
+            <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', fontWeight: 500 }}>State Bank of India</p>
+          </div>
+          <div style={{ width: 26, height: 19, borderRadius: 4, background: 'linear-gradient(135deg, #f0c040, #c8960c)', boxShadow: '0 2px 8px rgba(192,144,12,0.4)' }} />
+        </div>
+        <p style={{ fontFamily: 'monospace', fontSize: 13, color: 'rgba(255,255,255,0.88)', letterSpacing: '0.12em', marginBottom: 14, fontWeight: 600 }}>
+          **** **** **** 4821
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            <p style={{ fontSize: 8, color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>Card Holder</p>
+            <p style={{ fontSize: 11, color: 'white', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              {name?.toUpperCase().split(' ').slice(0, 2).join(' ') || 'HYPERONE USER'}
+            </p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontStyle: 'italic', fontWeight: 700 }}>VISA</p>
+            <div style={{ marginTop: 2, fontSize: 8, color: '#34d399', fontWeight: 700, background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>ACTIVE</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Emerald shield orb */}
+      <div className="suc-f2" style={{
+        position: 'absolute', right: '8%', top: '8%',
+        width: 82, height: 82, borderRadius: '50%',
+        background: 'radial-gradient(circle at 35% 35%, #34d399, #059669)',
+        boxShadow: '0 16px 48px rgba(52,211,153,0.5), 0 0 0 1px rgba(52,211,153,0.3)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <ShieldCheck style={{ width: 34, height: 34, color: 'white' }} />
+      </div>
+
+      {/* Gold coin */}
+      <div className="suc-f3" style={{
+        position: 'absolute', left: '5%', bottom: '40%',
+        width: 66, height: 66, borderRadius: '50%',
+        background: 'radial-gradient(circle at 38% 32%, #fde68a, #f59e0b, #d97706)',
+        boxShadow: '0 12px 36px rgba(245,158,11,0.55), 0 0 0 2px rgba(255,255,255,0.22)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: '2px solid rgba(255,255,255,0.22)',
+      }}>
+        <span style={{ fontSize: 24, fontWeight: 900, color: '#92400e', lineHeight: 1 }}>₹</span>
+      </div>
+
+      {/* AI badge */}
+      <div className="suc-f4" style={{
+        position: 'absolute', left: '10%', top: '14%',
+        background: 'rgba(255,255,255,0.12)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.22)',
+        borderRadius: 28, padding: '7px 15px',
+        display: 'flex', alignItems: 'center', gap: 7,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+      }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px #34d399' }} />
+        <span style={{ fontSize: 11, color: 'white', fontWeight: 600, letterSpacing: '0.02em' }}>AI Copilot Active</span>
+      </div>
+
+      {/* Account activated pill */}
+      <div className="suc-f5" style={{
+        position: 'absolute', left: '50%', bottom: '10%',
+        transform: 'translateX(-50%)',
+        background: 'rgba(255,255,255,0.08)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(52,211,153,0.3)',
+        borderRadius: 16, padding: '9px 20px',
+        display: 'flex', alignItems: 'center', gap: 9,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.3)', whiteSpace: 'nowrap',
+      }}>
+        <CheckCircle style={{ width: 14, height: 14, color: '#34d399' }} />
+        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.9)', fontWeight: 600, letterSpacing: '0.02em' }}>Account Activated</span>
+      </div>
+    </div>
+  );
+}
+
+function CopyField({ label, value }) {
+  const copy = () => { navigator.clipboard.writeText(value); toast.success(`${label} copied!`); };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 14, padding: '12px 16px' }}>
       <div>
-        <p className="text-[10px] text-white/35 uppercase tracking-wide font-medium">{label}</p>
-        <p className="text-sm font-mono font-semibold text-white/90 mt-0.5">{value}</p>
+        <p style={{ fontSize: 10, color: 'rgba(0,0,0,0.38)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600, marginBottom: 4 }}>{label}</p>
+        <p style={{ fontSize: 14, fontWeight: 600, color: '#1a1a2e', fontFamily: 'monospace', letterSpacing: '0.06em' }}>{value}</p>
       </div>
       <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
         onClick={copy}
-        className="w-8 h-8 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white/35 hover:text-white/80 transition-colors ml-4"
+        style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(10,88,245,0.06)', border: '1px solid rgba(10,88,245,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A58F5', cursor: 'pointer', flexShrink: 0, marginLeft: 12 }}
       >
-        <Copy className="w-3.5 h-3.5" />
+        <Copy style={{ width: 14, height: 14 }} />
       </motion.button>
     </div>
   );
 }
+
+const NEXT_STEPS = [
+  { icon: <LayoutDashboard style={{ width: 20, height: 20 }} />, title: 'Explore Dashboard', desc: 'Balances, transactions, insights', color: '#0A58F5', to: '/my-dashboard' },
+  { icon: <Cpu style={{ width: 20, height: 20 }} />, title: 'Meet AI Copilot', desc: 'Your personal financial advisor', color: '#7c3aed', to: '/my-dashboard' },
+  { icon: <TrendingUp style={{ width: 20, height: 20 }} />, title: 'Start Investing', desc: 'FDs, SIPs and mutual funds', color: '#059669', to: '/my-dashboard' },
+  { icon: <BarChart2 style={{ width: 20, height: 20 }} />, title: 'View Portfolio', desc: 'Risk profile & recommendations', color: '#d97706', to: '/my-dashboard' },
+];
 
 export default function Success() {
   const location = useLocation();
@@ -76,9 +224,8 @@ export default function Success() {
   useEffect(() => {
     sessionStorage.setItem('hyperone_auth', '1');
     sessionStorage.setItem('hyperone_role', 'customer');
-    // If we have a JWT from account creation, store it
     if (accountData?.token) {
-      const customerPayload = {
+      setAuth(accountData.token, {
         customerId: accountData.customerId,
         accountNumber: accountData.accountNumber,
         profile: accountData.profile,
@@ -86,8 +233,7 @@ export default function Success() {
         recommendedProducts: accountData.recommendedProducts,
         ifscCode: accountData.ifscCode,
         branchName: accountData.branchName,
-      };
-      setAuth(accountData.token, customerPayload);
+      });
     }
   }, []);
 
@@ -102,261 +248,370 @@ export default function Success() {
   };
 
   const data = accountData || mockData;
-  const hasRealToken = !!(accountData?.token);
+  const name = data.profile?.name || 'Customer';
+
+  const handleDownload = () => {
+    const el = document.createElement('a');
+    el.setAttribute('download', 'hyperone-account-details.txt');
+    el.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(
+      `HyperOne Account Details\n\nAccount Number: ${data.accountNumber}\nCustomer ID: ${data.customerId}\nMPIN: ${data.mpin}\nIFSC Code: ${data.ifscCode}\nBranch: ${data.branchName}\n\nKeep your MPIN secret.`
+    ));
+    el.click();
+  };
 
   return (
-    <div className="min-h-screen bg-[#060609] flex items-center justify-center relative overflow-hidden px-5 py-12">
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif", background: '#EEF1F8' }}>
+      <style>{SUC_CSS}</style>
       <Confetti />
 
-      {/* Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="orb w-[500px] h-[500px] bg-emerald-700" style={{ top: '-200px', left: '-100px' }} />
-        <div className="orb w-[400px] h-[400px] bg-indigo-700" style={{ bottom: '-100px', right: '-100px' }} />
-        <div className="orb w-[300px] h-[300px] bg-purple-700" style={{ top: '40%', right: '5%', opacity: 0.08 }} />
-      </div>
+      {/* ── LEFT PANEL ── */}
+      <div className="hidden lg:flex" style={{
+        width: '45%', minWidth: '360px',
+        position: 'sticky', top: 0, height: '100vh', alignSelf: 'flex-start',
+        background: 'linear-gradient(135deg, #0A1F6E 0%, #0942CC 55%, #1A6BFF 100%)',
+        flexDirection: 'column', padding: '44px 44px 36px', overflow: 'hidden',
+      }}>
+        {/* Ambient orbs */}
+        <div style={{ position: 'absolute', top: -120, right: -80, width: 380, height: 380, borderRadius: '50%', background: 'rgba(100,160,255,0.07)', pointerEvents: 'none', animation: 'ambPulse 8s ease-in-out infinite' }} />
+        <div style={{ position: 'absolute', bottom: -100, left: -60, width: 300, height: 300, borderRadius: '50%', background: 'rgba(52,211,153,0.06)', pointerEvents: 'none', animation: 'ambPulse 10s ease-in-out infinite 3s' }} />
 
-      <div className="relative z-10 max-w-lg w-full space-y-5">
-
-        {/* Logo nav */}
-        <div className="flex justify-center mb-2">
-          <button
-            onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            className="flex items-center gap-2 opacity-40 hover:opacity-70 transition-opacity"
-          >
-            <div className="w-6 h-6 rounded-[7px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <Zap className="w-3 h-3 text-white" />
-            </div>
-            <span className="text-white text-sm font-bold tracking-tight">HyperOne</span>
-          </button>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap style={{ width: 16, height: 16, color: 'white' }} />
+          </div>
+          <span style={{ color: 'white', fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>HyperOne</span>
+          <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, color: '#34d399', background: 'rgba(52,211,153,0.14)', border: '1px solid rgba(52,211,153,0.3)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Live</span>
         </div>
 
-        {/* Success header */}
+        {/* Headline */}
+        <div style={{ marginTop: 36 }}>
+          <h1 style={{ fontSize: 'clamp(38px, 4vw, 58px)', fontWeight: 900, color: 'white', lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 14 }}>
+            Banking,<br />
+            <span style={{ color: 'rgba(255,255,255,0.68)' }}>Activated.</span>
+          </h1>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.65, maxWidth: 290 }}>
+            Your identity is verified. Your HyperOne account is live and ready.
+          </p>
+        </div>
+
+        {/* Animated checklist */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 28 }}>
+          {CHECKS.map((c, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -18 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 + i * 0.1, duration: 0.4, ease: 'easeOut' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+            >
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: `${c.color}22`, border: `1px solid ${c.color}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Check style={{ width: 10, height: 10, color: c.color }} />
+              </div>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', fontWeight: 500 }}>{c.label}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Floating visuals fill remaining space */}
+        <FloatingVisuals name={name} />
+
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', fontWeight: 500, letterSpacing: '0.04em' }}>
+          Built for SBI HackFest 2026 · Secured by RBI Guidelines
+        </p>
+      </div>
+
+      {/* ── RIGHT PANEL ── */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 'clamp(24px, 4vw, 52px) clamp(16px, 3vw, 44px)', overflowY: 'auto' }}>
         <motion.div
-          initial={{ opacity: 0, scale: 0.75, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, type: 'spring', stiffness: 240, damping: 22 }}
-          className="text-center"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{ width: '100%', maxWidth: 680, background: 'rgba(255,255,255,0.93)', backdropFilter: 'blur(30px)', borderRadius: 40, padding: 'clamp(28px, 4vw, 52px)', boxShadow: '0 40px 100px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.7)' }}
         >
-          <div className="relative inline-block mb-6">
-            <div className="w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
-              <CheckCircle className="w-9 h-9 text-emerald-400" />
+
+          {/* ── Success orb sequence ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 36, textAlign: 'center' }}>
+            <div style={{ position: 'relative', marginBottom: 24 }}>
+              {/* Orb */}
+              <motion.div
+                initial={{ scale: 0.3, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.6, type: 'spring', stiffness: 260, damping: 22 }}
+                style={{ width: 88, height: 88, borderRadius: '50%', background: 'linear-gradient(135deg, #0A2A8A, #0A58F5)', boxShadow: '0 8px 40px rgba(10,88,245,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 2 }}
+              >
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.3, type: 'spring', stiffness: 320 }}
+                >
+                  <Check style={{ width: 40, height: 40, color: 'white', strokeWidth: 3 }} />
+                </motion.div>
+              </motion.div>
+
+              {/* Ripple 1 */}
+              <motion.div
+                initial={{ scale: 1, opacity: 0.5 }}
+                animate={{ scale: 2.4, opacity: 0 }}
+                transition={{ delay: 0.7, duration: 1.4, ease: 'easeOut', repeat: Infinity, repeatDelay: 2.2 }}
+                style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(10,88,245,0.4)', zIndex: 1 }}
+              />
+              {/* Ripple 2 */}
+              <motion.div
+                initial={{ scale: 1, opacity: 0.3 }}
+                animate={{ scale: 3, opacity: 0 }}
+                transition={{ delay: 0.95, duration: 1.6, ease: 'easeOut', repeat: Infinity, repeatDelay: 2.2 }}
+                style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid rgba(10,88,245,0.2)', zIndex: 1 }}
+              />
+
+              {/* Verification badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.7 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 1.1, duration: 0.4, type: 'spring', stiffness: 280, damping: 20 }}
+                style={{ position: 'absolute', bottom: -8, right: -8, background: '#34d399', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid white', boxShadow: '0 4px 12px rgba(52,211,153,0.5)', zIndex: 3 }}
+              >
+                <CheckCircle style={{ width: 14, height: 14, color: 'white' }} />
+              </motion.div>
             </div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              style={{ fontSize: 'clamp(26px, 3.5vw, 36px)', fontWeight: 800, color: '#0A1628', lineHeight: 1.12, letterSpacing: '-0.03em', marginBottom: 10 }}
+            >
+              Your account is ready.
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              style={{ fontSize: 15, color: 'rgba(0,0,0,0.44)', lineHeight: 1.6, maxWidth: 440 }}
+            >
+              You can now access AI-powered banking, investments and personalised financial guidance.
+            </motion.p>
+
             <motion.div
-              className="absolute inset-0 rounded-full border border-emerald-400/25"
-              animate={{ scale: [1, 1.6], opacity: [0.6, 0] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
-            />
-            <motion.div
-              className="absolute inset-0 rounded-full border border-emerald-400/15"
-              animate={{ scale: [1, 2], opacity: [0.4, 0] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut', delay: 0.4 }}
-            />
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.65, duration: 0.4 }}
+              style={{ marginTop: 16, background: 'linear-gradient(135deg, rgba(10,40,138,0.06), rgba(10,88,245,0.06))', border: '1px solid rgba(10,88,245,0.12)', borderRadius: 20, padding: '8px 22px', fontSize: 14, color: '#0A2A8A', fontWeight: 600 }}
+            >
+              Welcome, {name}! 🎉
+            </motion.div>
           </div>
 
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Account Opened! 🎉</h1>
-          <p className="text-white/50">
-            Welcome to SBI,{' '}
-            <span className="text-white/80 font-semibold">{data.profile?.name || 'Customer'}</span>!
-            Your account is live.
-          </p>
-        </motion.div>
+          {/* ── HyperOne Debit Card ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20, rotateX: 8 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+            transition={{ delay: 0.3, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+            style={{ borderRadius: 24, overflow: 'hidden', background: 'linear-gradient(140deg, #0A1F6E 0%, #0942CC 55%, #1A6BFF 100%)', boxShadow: '0 24px 64px rgba(10,40,110,0.4), 0 8px 24px rgba(0,0,0,0.2)', padding: '26px 28px 22px', position: 'relative', marginBottom: 28 }}
+          >
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 75% 20%, rgba(255,255,255,0.2) 0%, transparent 60%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
 
-        {/* Credit card visual */}
-        <motion.div
-          initial={{ opacity: 0, y: 28, rotateX: 10 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
-          transition={{ delay: 0.2, duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="relative rounded-[24px] overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, #312e81 0%, #6d28d9 50%, #9d174d 100%)',
-            boxShadow: '0 32px 80px rgba(99,102,241,0.4), 0 8px 24px rgba(0,0,0,0.5)',
-          }}
-        >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at 75% 20%, rgba(255,255,255,0.22) 0%, transparent 55%)' }}
-          />
-          <div className="relative p-6 pb-7">
-            <div className="flex items-start justify-between mb-10">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 26 }}>
               <div>
-                <p className="text-white/55 text-[10px] uppercase tracking-[0.18em] font-semibold">State Bank of India</p>
-                <p className="text-white font-bold text-lg mt-1 tracking-tight">HyperOne Digital Account</p>
+                <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.44)', textTransform: 'uppercase', letterSpacing: '0.18em', fontWeight: 600, marginBottom: 4 }}>State Bank of India</p>
+                <p style={{ fontSize: 16, color: 'white', fontWeight: 700, letterSpacing: '-0.01em' }}>HyperOne Digital Account</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-sm">
-                <Smartphone className="w-5 h-5 text-white" />
-              </div>
+              <div style={{ width: 32, height: 24, borderRadius: 5, background: 'linear-gradient(135deg, #f0c040, #c8960c)', boxShadow: '0 2px 8px rgba(192,144,12,0.4)' }} />
             </div>
 
-            <p className="text-white/55 text-[10px] uppercase tracking-[0.14em] mb-1.5 font-medium">Account Number</p>
-            <p className="text-white font-mono text-[1.35rem] font-bold tracking-[0.12em] mb-7">
-              {data.accountNumber?.replace(/(\d{4})(\d{4})(\d{3,})/, '$1 $2 $3') || '3456 7890 1234'}
+            <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 6, fontWeight: 500 }}>Account Number</p>
+            <p style={{ fontFamily: 'monospace', fontSize: '1.35rem', color: 'white', fontWeight: 700, letterSpacing: '0.1em', marginBottom: 26 }}>
+              {data.accountNumber
+                ? '*'.repeat(Math.max(0, data.accountNumber.length - 4)).replace(/(.{4})/g, '$1 ').trim() + ' ' + data.accountNumber.slice(-4)
+                : '**** **** 1234'}
             </p>
 
-            <div className="flex justify-between">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <div>
-                <p className="text-white/45 text-[10px] uppercase tracking-wide mb-1">Customer ID</p>
-                <p className="text-white font-mono font-semibold text-sm">{data.customerId}</p>
+                <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.34)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 3 }}>Customer</p>
+                <p style={{ fontSize: 14, color: 'white', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  {name.toUpperCase().split(' ').slice(0, 2).join(' ')}
+                </p>
               </div>
-              <div>
-                <p className="text-white/45 text-[10px] uppercase tracking-wide mb-1">IFSC Code</p>
-                <p className="text-white font-mono font-semibold text-sm">{data.ifscCode}</p>
-              </div>
-              <div>
-                <p className="text-white/45 text-[10px] uppercase tracking-wide mb-1">Branch</p>
-                <p className="text-white font-semibold text-xs">{data.branchName}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.48)', fontStyle: 'italic', fontWeight: 700 }}>VISA</p>
+                <div style={{ fontSize: 9, color: '#34d399', fontWeight: 700, background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.35)', padding: '3px 10px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  ● ACTIVE
+                </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* MPIN card — prominent, save-this-once style */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="rounded-2xl p-5"
-          style={{
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.14) 0%, rgba(5,150,105,0.10) 100%)',
-            border: '1px solid rgba(16,185,129,0.25)',
-          }}
-        >
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-              <KeyRound className="w-4 h-4 text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold text-emerald-300 uppercase tracking-[0.16em]">Save Your MPIN</p>
-              <p className="text-[11px] text-white/40">Shown only once — use it to sign in later</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between bg-black/20 rounded-xl px-4 py-3">
-            <div>
-              <p className="text-[10px] text-white/35 uppercase tracking-wide mb-1">6-digit MPIN</p>
-              <p className="text-2xl font-mono font-bold tracking-[0.22em] text-white">{data.mpin || '——'}</p>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.92 }}
-              onClick={() => { navigator.clipboard.writeText(data.mpin || ''); toast.success('MPIN copied!'); }}
-              className="w-9 h-9 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center text-white/50 hover:text-white/90 transition-colors"
-            >
-              <Copy className="w-4 h-4" />
-            </motion.button>
-          </div>
-          <p className="text-[11px] text-white/30 mt-3">
-            Sign in at any time using: <span className="text-white/55 font-mono">{data.customerId}</span> + this MPIN
-          </p>
-        </motion.div>
-
-        {/* Account details */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-card rounded-2xl p-5"
-        >
-          <p className="text-[10px] font-semibold text-white/35 uppercase tracking-[0.16em] mb-3">Account Details</p>
-          <CopyableField label="Account Number" value={data.accountNumber || '—'} />
-          <CopyableField label="Customer ID" value={data.customerId || '—'} />
-          <CopyableField label="IFSC Code" value={data.ifscCode || '—'} />
-        </motion.div>
-
-        {/* Products activated */}
-        {data.recommendedProducts?.length > 0 && (
+          {/* ── MPIN ── */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="glass-card rounded-2xl p-5"
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.42 }}
+            style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.08), rgba(5,150,105,0.05))', border: '1px solid rgba(52,211,153,0.2)', borderRadius: 20, padding: '20px 22px', marginBottom: 24 }}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <p className="text-[10px] font-semibold text-white/35 uppercase tracking-[0.16em]">Products Activated</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 12, background: 'rgba(52,211,153,0.14)', border: '1px solid rgba(52,211,153,0.24)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <KeyRound style={{ width: 16, height: 16, color: '#059669' }} />
+              </div>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#059669', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Save Your MPIN</p>
+                <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.38)', marginTop: 1 }}>Shown only once — use it to sign in later</p>
+              </div>
             </div>
-            <div className="space-y-2.5">
-              {data.recommendedProducts.map((p, i) => (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.04)', borderRadius: 14, padding: '14px 18px' }}>
+              <div>
+                <p style={{ fontSize: 10, color: 'rgba(0,0,0,0.34)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>6-digit MPIN</p>
+                <p style={{ fontFamily: 'monospace', fontSize: 28, fontWeight: 800, letterSpacing: '0.2em', color: '#1a1a2e' }}>{data.mpin || '——'}</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}
+                onClick={() => { navigator.clipboard.writeText(data.mpin || ''); toast.success('MPIN copied!'); }}
+                style={{ width: 38, height: 38, borderRadius: 12, background: 'rgba(5,150,105,0.1)', border: '1px solid rgba(5,150,105,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#059669' }}
+              >
+                <Copy style={{ width: 15, height: 15 }} />
+              </motion.button>
+            </div>
+            <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.34)', marginTop: 10 }}>
+              Sign in with: <span style={{ fontFamily: 'monospace', color: 'rgba(0,0,0,0.54)', fontWeight: 600 }}>{data.customerId}</span> + this MPIN
+            </p>
+          </motion.div>
+
+          {/* ── Account Details ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            style={{ marginBottom: 24 }}
+          >
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.34)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 12 }}>Account Details</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <CopyField label="Account Number" value={data.accountNumber || '—'} />
+              <CopyField label="Customer ID" value={data.customerId || '—'} />
+              <CopyField label="IFSC Code" value={data.ifscCode || '—'} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 2 }}>
+                {[
+                  { label: 'Account Type', value: 'Digital Savings', icon: '🏦' },
+                  { label: 'KYC Status', value: 'Verified', icon: '✅' },
+                  { label: 'Risk Profile', value: data.profile?.category === 'salaried' ? 'Moderate' : 'Conservative', icon: '📊' },
+                  { label: 'Account Status', value: 'Active', icon: '🟢' },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.54 + i * 0.06 }}
+                    whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(10,88,245,0.08)' }}
+                    style={{ background: '#f8fafc', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 14, padding: '14px 16px', cursor: 'default' }}
+                  >
+                    <p style={{ fontSize: 17, marginBottom: 6 }}>{item.icon}</p>
+                    <p style={{ fontSize: 10, color: 'rgba(0,0,0,0.34)', textTransform: 'uppercase', letterSpacing: '0.09em', fontWeight: 600, marginBottom: 3 }}>{item.label}</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e' }}>{item.value}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ── Products Activated ── */}
+          {data.recommendedProducts?.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.58 }}
+              style={{ background: '#f8fafc', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 20, padding: '18px 20px', marginBottom: 24 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <Sparkles style={{ width: 14, height: 14, color: '#0A58F5' }} />
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.34)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>Products Activated</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {data.recommendedProducts.map((p, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.62 + i * 0.06 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+                  >
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Check style={{ width: 10, height: 10, color: '#059669' }} />
+                    </div>
+                    <span style={{ fontSize: 13, color: 'rgba(0,0,0,0.62)', fontWeight: 500 }}>{p}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Next Steps ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.64 }}
+            style={{ marginBottom: 32 }}
+          >
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(0,0,0,0.34)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 14 }}>What's Next</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {NEXT_STEPS.map((step, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.55 + i * 0.06, ...spring }}
-                  className="flex items-center gap-2.5"
+                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 + i * 0.07 }}
+                  whileHover={{ y: -3, boxShadow: `0 12px 32px ${step.color}1a` }}
+                  onClick={() => navigate(step.to, { replace: true })}
+                  style={{ background: 'white', border: '1px solid rgba(0,0,0,0.07)', borderRadius: 18, padding: '18px 16px', cursor: 'pointer' }}
                 >
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-3 h-3 text-emerald-400" />
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: `${step.color}12`, border: `1px solid ${step.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: step.color, marginBottom: 12 }}>
+                    {step.icon}
                   </div>
-                  <span className="text-sm text-white/75">{p}</span>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e', marginBottom: 4 }}>{step.title}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(0,0,0,0.4)', lineHeight: 1.4, marginBottom: 10 }}>{step.desc}</p>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <ArrowRight style={{ width: 14, height: 14, color: 'rgba(0,0,0,0.22)' }} />
+                  </div>
                 </motion.div>
               ))}
             </div>
           </motion.div>
-        )}
 
-        {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.62 }}
-          className="grid grid-cols-3 gap-3"
-        >
-          {/* Download */}
-          <button
-            onClick={() => {
-              const el = document.createElement('a');
-              el.setAttribute('download', 'hyperone-account-details.txt');
-              el.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(
-                `HyperOne Account Details\n\nAccount Number: ${data.accountNumber}\nCustomer ID: ${data.customerId}\nMPIN: ${data.mpin}\nIFSC Code: ${data.ifscCode}\nBranch: ${data.branchName}\n\nKeep your MPIN secret.`
-              ));
-              el.click();
-            }}
-            className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-medium transition-all"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.65)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+          {/* ── CTAs ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
           >
-            <Download className="w-4 h-4" />
-            Save
-          </button>
+            <motion.button
+              whileHover={{ scale: 1.02, boxShadow: '0 16px 48px rgba(10,88,245,0.42)' }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/my-dashboard', { replace: true })}
+              style={{ width: '100%', minHeight: 64, borderRadius: 100, background: 'linear-gradient(135deg, #0A2A8A, #0A58F5)', border: 'none', color: 'white', fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: '0 8px 32px rgba(10,88,245,0.35)', fontFamily: 'inherit' }}
+            >
+              <LayoutDashboard style={{ width: 20, height: 20 }} />
+              Go To Dashboard
+              <ArrowRight style={{ width: 18, height: 18, opacity: 0.75 }} />
+            </motion.button>
 
-          {/* Go to Dashboard — primary if authenticated, else secondary */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/my-dashboard')}
-            className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold text-white"
-            style={{
-              background: hasRealToken
-                ? 'linear-gradient(135deg, #059669, #10b981)'
-                : 'rgba(255,255,255,0.08)',
-              border: hasRealToken ? 'none' : '1px solid rgba(255,255,255,0.12)',
-              boxShadow: hasRealToken ? '0 4px 20px rgba(5,150,105,0.35)' : 'none',
-            }}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            Dashboard
-          </motion.button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {[
+                { label: 'Save Details', icon: <Download style={{ width: 15, height: 15 }} />, action: handleDownload },
+                { label: 'Dashboard', icon: <Home style={{ width: 15, height: 15 }} />, action: () => navigate('/my-dashboard', { replace: true }) },
+              ].map((btn, i) => (
+                <motion.button
+                  key={i}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={btn.action}
+                  style={{ flex: 1, height: 50, borderRadius: 100, background: 'transparent', border: '1.5px solid rgba(0,0,0,0.11)', color: 'rgba(0,0,0,0.52)', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: 'inherit', transition: 'background 0.18s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  {btn.icon}
+                  {btn.label}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
 
-          {/* Return Home */}
-          <button
-            onClick={() => navigate('/')}
-            className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-semibold text-white transition-all"
-            style={{ background: '#1d1d1f', border: '1px solid rgba(255,255,255,0.08)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#2d2d2f'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#1d1d1f'; }}
-          >
-            <Home className="w-4 h-4" />
-            Home
-          </button>
+          <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(0,0,0,0.24)', marginTop: 24 }}>
+            Welcome aboard · Built for SBI HackFest 2026
+          </p>
         </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.72 }}
-          className="text-center text-xs text-white/25 pb-2"
-        >
-          Welcome aboard · Built for SBI HackFest 2026
-        </motion.p>
       </div>
     </div>
   );

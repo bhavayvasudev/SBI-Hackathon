@@ -1,105 +1,65 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, RotateCcw, ChevronRight } from 'lucide-react';
+import {
+  Send, Sparkles, RotateCcw,
+  TrendingUp, Shield, BarChart2, Wallet,
+  Calculator, Home, Mic, Paperclip, Activity,
+} from 'lucide-react';
 import { streamCopilotMessage } from '../lib/api.js';
 
-/* ─── Suggestion chips ─────────────────────────────── */
+/* ─── Suggestions (enriched) ──────────────────────────── */
 const SUGGESTIONS = [
-  { label: 'Portfolio summary', query: 'Give me a summary of my portfolio performance.' },
-  { label: 'Loan eligibility', query: 'What loans am I eligible for based on my income?' },
-  { label: 'Tax saving tips', query: 'How much tax can I save this year? What should I invest in?' },
-  { label: 'Investment advice', query: 'Suggest the best investments for my goals.' },
-  { label: 'SIP recommendation', query: 'Should I increase my SIP amount? What do you recommend?' },
-  { label: 'Home loan EMI', query: 'What EMI would I pay on a ₹30 lakh home loan for 20 years?' },
-  { label: 'Explain my returns', query: 'Explain my investment returns and if they are good.' },
-  { label: 'Emergency fund', query: 'Do I have an adequate emergency fund? What should I set aside?' },
+  { label: 'Optimize SIP',     query: 'Should I increase my SIP amount? What do you recommend?',                icon: Activity,   iconColor: '#1A56DB', iconBg: '#EFF6FF', description: 'Rebalance fund allocation',     impact: '+₹18K/yr',     time: '2 min' },
+  { label: 'Tax Planning',     query: 'How much tax can I save this year? What should I invest in?',           icon: Calculator, iconColor: '#7C3AED', iconBg: '#F5F3FF', description: 'Maximize 80C deductions',       impact: '₹46,800 saved', time: '3 min' },
+  { label: 'Loan Check',       query: 'What loans am I eligible for based on my income?',                      icon: Home,       iconColor: '#059669', iconBg: '#ECFDF5', description: 'Based on score & income',       impact: 'Up to ₹40L',   time: '1 min' },
+  { label: 'Portfolio Review', query: 'Give me a summary of my portfolio performance.',                        icon: BarChart2,  iconColor: '#D97706', iconBg: '#FFFBEB', description: 'Identify underperformers',      impact: '+2.4% returns', time: '5 min' },
+  { label: 'Emergency Fund',   query: 'Do I have an adequate emergency fund? What should I set aside?',        icon: Shield,     iconColor: '#DC2626', iconBg: '#FEF2F2', description: 'Cover 6 months expenses',       impact: '₹2.1L target',  time: '2 min' },
+  { label: 'Home Loan EMI',    query: 'What EMI would I pay on a ₹30 lakh home loan for 20 years?',           icon: Wallet,     iconColor: '#0891B2', iconBg: '#ECFEFF', description: 'EMI & tenure planning',         impact: '₹30L loan',     time: '1 min' },
+  { label: 'Investment Ideas', query: 'Suggest the best investments for my goals.',                            icon: TrendingUp, iconColor: '#D97706', iconBg: '#FFFBEB', description: 'Goal-aligned strategies',       impact: '+15% potential', time: '4 min' },
+  { label: 'Explain Returns',  query: 'Explain my investment returns and if they are good.',                   icon: TrendingUp, iconColor: '#059669', iconBg: '#ECFDF5', description: 'CAGR vs. benchmark',            impact: 'Full analysis',  time: '3 min' },
 ];
 
-/* ─── Message bubble ───────────────────────────────── */
-function MessageBubble({ msg, isStreaming }) {
-  const isUser = msg.role === 'user';
-
+/* ─── AI Avatar ───────────────────────────────────────── */
+function AIAvatar({ size = 40 }) {
+  const br = Math.round(size * 0.3);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.24, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className={`flex items-end gap-3 ${isUser ? 'flex-row-reverse pl-10' : 'flex-row pr-10'}`}
-    >
-      {/* AI avatar */}
-      {!isUser && (
-        <div
-          className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 self-end mb-0.5"
-          style={{
-            background: 'linear-gradient(135deg, #1d1d1f 0%, #3730a3 100%)',
-            boxShadow: '0 2px 10px rgba(55,48,163,0.3)',
-          }}
-        >
-          <Sparkles className="w-3.5 h-3.5 text-white" />
-        </div>
-      )}
-
-      {/* Bubble */}
-      <div
+    <div style={{ position: 'relative', flexShrink: 0, width: size, height: size }}>
+      <motion.div
+        animate={{ scale: [1, 1.6, 1], opacity: [0.22, 0, 0.22] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeOut' }}
         style={{
-          maxWidth: '78%',
-          fontSize: '14.5px',
-          lineHeight: '1.65',
-          padding: '12px 16px',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          ...(isUser
-            ? {
-                background: 'linear-gradient(145deg, #1e3a8a 0%, #3730a3 50%, #4f46e5 100%)',
-                borderRadius: '18px 18px 5px 18px',
-                color: '#ffffff',
-                boxShadow: '0 3px 16px rgba(79,70,229,0.28), inset 0 1px 0 rgba(255,255,255,0.1)',
-              }
-            : {
-                background: 'rgba(255,255,255,0.96)',
-                borderRadius: '18px 18px 18px 5px',
-                color: '#1d1d1f',
-                border: '1px solid rgba(0,0,0,0.08)',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.07), 0 0 0 0.5px rgba(0,0,0,0.04)',
-                backdropFilter: 'blur(12px)',
-              }),
+          position: 'absolute', top: -5, left: -5, right: -5, bottom: -5,
+          borderRadius: br + 5, background: 'rgba(26,86,219,0.18)', zIndex: 0,
         }}
-      >
-        {msg.content}
-        {isStreaming && !isUser && (
-          <span
-            style={{
-              display: 'inline-block',
-              width: '2px',
-              height: '13px',
-              marginLeft: '3px',
-              verticalAlign: 'middle',
-              borderRadius: '2px',
-              background: '#4f46e5',
-              animation: 'copilot-cursor 0.7s ease-in-out infinite',
-            }}
-          />
-        )}
+      />
+      <div style={{
+        width: size, height: size, borderRadius: br,
+        background: 'linear-gradient(145deg, #1556CB 0%, #1A56DB 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative', zIndex: 1,
+        boxShadow: '0 4px 18px rgba(26,86,219,0.3)',
+      }}>
+        <Sparkles style={{ width: size * 0.42, height: size * 0.42, color: '#fff' }} />
       </div>
-
-      {/* User avatar */}
-      {isUser && (
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0 self-end mb-0.5"
-          style={{
-            background: 'rgba(0,0,0,0.06)',
-            color: '#6e6e73',
-            border: '1px solid rgba(0,0,0,0.08)',
-          }}
-        >
-          {msg._initial || 'U'}
-        </div>
-      )}
-    </motion.div>
+    </div>
   );
 }
 
-/* ─── Typing indicator ─────────────────────────────── */
+/* ─── User Avatar ─────────────────────────────────────── */
+function UserAvatar({ initial }) {
+  return (
+    <div style={{
+      width: 32, height: 32, borderRadius: '50%',
+      background: '#F1F5F9', border: '1.5px solid #E2E8F0',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, fontSize: 12, fontWeight: 600, color: '#475569',
+    }}>
+      {initial || 'U'}
+    </div>
+  );
+}
+
+/* ─── Typing indicator ────────────────────────────────── */
 function TypingDots() {
   return (
     <motion.div
@@ -107,38 +67,25 @@ function TypingDots() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
       transition={{ duration: 0.2 }}
-      className="flex items-end gap-3 pr-10"
+      style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}
     >
-      <div
-        className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0"
-        style={{
-          background: 'linear-gradient(135deg, #1d1d1f 0%, #3730a3 100%)',
-          boxShadow: '0 2px 10px rgba(55,48,163,0.3)',
-        }}
-      >
-        <Sparkles className="w-3.5 h-3.5 text-white" />
-      </div>
-      <div
-        style={{
-          padding: '14px 18px',
-          background: 'rgba(255,255,255,0.96)',
-          border: '1px solid rgba(0,0,0,0.08)',
-          borderRadius: '18px 18px 18px 5px',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.07)',
-        }}
-      >
-        <div className="flex gap-[5px] items-center" style={{ height: '1rem' }}>
+      <AIAvatar size={36} />
+      <div style={{
+        padding: '14px 18px',
+        background: '#FFFFFF',
+        border: '1px solid rgba(15,23,42,0.07)',
+        borderRadius: '4px 20px 20px 20px',
+        boxShadow: '0 2px 12px rgba(15,23,42,0.06)',
+      }}>
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center', height: 16 }}>
           {[0, 1, 2].map(i => (
-            <span
+            <motion.span
               key={i}
+              animate={{ y: [0, -4, 0], opacity: [0.35, 1, 0.35] }}
+              transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
               style={{
-                display: 'inline-block',
-                width: 5,
-                height: 5,
-                borderRadius: '50%',
-                background: '#8e8e93',
-                animation: 'copilot-dot 1.4s ease-in-out infinite',
-                animationDelay: `${i * 0.18}s`,
+                display: 'inline-block', width: 5, height: 5,
+                borderRadius: '50%', background: '#94A3B8',
               }}
             />
           ))}
@@ -148,105 +95,352 @@ function TypingDots() {
   );
 }
 
-/* ─── Welcome state ────────────────────────────────── */
-function WelcomeState({ customerName, onSuggest }) {
+/* ─── Message bubble ──────────────────────────────────── */
+function MessageBubble({ msg, isStreaming }) {
+  const isUser = msg.role === 'user';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.24, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{
+        display: 'flex', alignItems: 'flex-start', gap: 12,
+        flexDirection: isUser ? 'row-reverse' : 'row',
+      }}
+    >
+      {!isUser ? <AIAvatar size={36} /> : <UserAvatar initial={msg._initial} />}
+      <div style={{
+        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        fontSize: 14, lineHeight: 1.75,
+        ...(isUser ? {
+          maxWidth: '72%',
+          background: 'rgba(26,86,219,0.07)',
+          border: '1px solid rgba(26,86,219,0.13)',
+          borderRadius: '20px 4px 20px 20px',
+          padding: '10px 16px',
+          color: '#1E40AF',
+          fontWeight: 500,
+        } : {
+          flex: 1,
+          background: '#FFFFFF',
+          border: '1px solid rgba(15,23,42,0.07)',
+          borderRadius: '4px 20px 20px 20px',
+          padding: '18px 22px',
+          boxShadow: '0 2px 16px rgba(15,23,42,0.06)',
+          color: '#1C1C1E',
+        }),
+      }}>
+        {msg.content}
+        {isStreaming && !isUser && (
+          <motion.span
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 0.65, repeat: Infinity }}
+            style={{
+              display: 'inline-block', width: 2, height: 14,
+              background: '#1A56DB', marginLeft: 3,
+              verticalAlign: 'middle', borderRadius: 2,
+            }}
+          />
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Hero Card ───────────────────────────────────────── */
+function HeroCard({ customerName }) {
+  const hour = new Date().getHours();
+  const greeting = hour < 5 ? 'Good night' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const firstName = (customerName || 'there').split(' ')[0];
+
+  const metrics = [
+    { label: 'Net Worth',       value: '₹8.2L',  change: '+₹12,400' },
+    { label: 'Monthly Savings', value: '₹34K',   change: '+12%' },
+    { label: 'Goal Progress',   value: '74%',    change: '▲ On track' },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.3 }}
-      className="flex flex-col items-center justify-center h-full px-6 text-center"
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{
+        margin: '16px 16px 0',
+        borderRadius: 22,
+        background: 'linear-gradient(145deg, #0D1B3E 0%, #1A3A8A 52%, #1E54C0 100%)',
+        padding: '22px 22px 20px',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 8px 32px rgba(26,86,219,0.26), 0 2px 8px rgba(0,0,0,0.12)',
+      }}
     >
-      {/* Icon */}
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 20 }}
-        className="w-16 h-16 rounded-[20px] flex items-center justify-center mb-5"
-        style={{
-          background: 'linear-gradient(135deg, #1d1d1f 0%, #3730a3 60%, #4f46e5 100%)',
-          boxShadow: '0 8px 32px rgba(79,70,229,0.28)',
-        }}
-      >
-        <Sparkles className="w-7 h-7 text-white" />
-      </motion.div>
-
-      <motion.h2
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.18 }}
-        className="text-[22px] font-bold tracking-tight mb-2"
-        style={{ color: '#1d1d1f' }}
-      >
-        Hi {firstName}, I'm your<br />
-        <span style={{ color: '#4f46e5' }}>AI Banking Copilot</span>
-      </motion.h2>
+      {/* Decorative glow blobs */}
+      <div style={{ position: 'absolute', top: -40, right: -20, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', filter: 'blur(36px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: -30, left: 10, width: 130, height: 130, borderRadius: '50%', background: 'rgba(99,179,237,0.06)', filter: 'blur(28px)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 15, left: '55%', width: 70, height: 70, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', filter: 'blur(16px)', pointerEvents: 'none' }} />
 
       <motion.p
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.24 }}
-        className="text-[13.5px] mb-8 max-w-xs"
-        style={{ color: '#6e6e73', lineHeight: 1.6 }}
+        transition={{ delay: 0.06 }}
+        style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', fontWeight: 500, marginBottom: 7 }}
       >
-        Ask me anything about your portfolio, loans,<br />
-        investments, tax savings, or banking.
+        {greeting}, {firstName}
       </motion.p>
 
-      {/* Suggestion chips */}
-      <motion.div
+      <motion.p
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="w-full max-w-sm space-y-2"
+        transition={{ delay: 0.1 }}
+        style={{ fontSize: 17, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.4, letterSpacing: '-0.2px', marginBottom: 5 }}
       >
-        {SUGGESTIONS.slice(0, 4).map((s, i) => (
-          <motion.button
-            key={s.label}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.32 + i * 0.06 }}
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onSuggest(s.query)}
-            className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-left transition-all"
+        Your net worth grew{' '}
+        <span style={{ color: '#6EE7B7' }}>₹12,400</span> this month.
+      </motion.p>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.14 }}
+        style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 20, lineHeight: 1.5 }}
+      >
+        What would you like to achieve today?
+      </motion.p>
+
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 16 }} />
+
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18 }}
+        style={{ display: 'flex' }}
+      >
+        {metrics.map((m, i) => (
+          <div
+            key={m.label}
             style={{
-              background: 'rgba(255,255,255,0.9)',
-              border: '1px solid rgba(0,0,0,0.08)',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-              backdropFilter: 'blur(8px)',
+              flex: 1,
+              paddingRight: i < metrics.length - 1 ? 14 : 0,
+              borderRight: i < metrics.length - 1 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+              paddingLeft: i > 0 ? 14 : 0,
             }}
           >
-            <span className="text-[13px] font-medium" style={{ color: '#1d1d1f' }}>{s.label}</span>
-            <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#aeaeb2' }} />
-          </motion.button>
+            <p style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 5 }}>
+              {m.label}
+            </p>
+            <p style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.3px', marginBottom: 3 }}>
+              {m.value}
+            </p>
+            <p style={{ fontSize: 10, fontWeight: 600, color: '#6EE7B7' }}>
+              {m.change}
+            </p>
+          </div>
         ))}
       </motion.div>
     </motion.div>
   );
 }
 
-/* ─── Main Copilot Panel ───────────────────────────── */
+/* ─── Financial Widgets ───────────────────────────────── */
+function FinancialWidgets() {
+  return (
+    <div style={{
+      padding: '12px 16px 0',
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gridTemplateRows: 'auto auto',
+      gap: 10,
+    }}>
+
+      {/* Credit Score — tall, spans 2 rows */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        style={{
+          gridRow: 'span 2',
+          borderRadius: 20,
+          background: '#FFFFFF',
+          border: '1px solid rgba(15,23,42,0.07)',
+          padding: '18px 16px',
+          boxShadow: '0 2px 14px rgba(15,23,42,0.06)',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        <p style={{ fontSize: 8.5, color: '#94A3B8', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: 10 }}>
+          Credit Score
+        </p>
+        <p style={{ fontSize: 46, fontWeight: 900, color: '#059669', letterSpacing: '-2px', lineHeight: 1, marginBottom: 4 }}>
+          782
+        </p>
+        <p style={{ fontSize: 11, fontWeight: 600, color: '#059669', marginBottom: 14 }}>▲ Excellent</p>
+
+        <div style={{ height: 5, borderRadius: 5, background: '#F1F5F9', overflow: 'hidden', marginBottom: 4 }}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: '78%' }}
+            transition={{ delay: 0.55, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            style={{ height: '100%', borderRadius: 5, background: 'linear-gradient(90deg, #10B981, #34D399)' }}
+          />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+          <span style={{ fontSize: 9, color: '#CBD5E1' }}>300</span>
+          <span style={{ fontSize: 9, color: '#CBD5E1' }}>900</span>
+        </div>
+
+        <div style={{ marginTop: 'auto' }}>
+          {['Home Loan', 'Car Loan', 'Premium CC'].map(tag => (
+            <span key={tag} style={{
+              display: 'inline-block', marginRight: 4, marginBottom: 4,
+              fontSize: 9.5, color: '#059669', background: '#ECFDF5',
+              padding: '2px 7px', borderRadius: 5, fontWeight: 600,
+            }}>
+              {tag}
+            </span>
+          ))}
+          <p style={{ fontSize: 10, color: '#94A3B8', marginTop: 6 }}>Eligible for premium rates</p>
+        </div>
+      </motion.div>
+
+      {/* Portfolio Health */}
+      <motion.div
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.24 }}
+        style={{
+          borderRadius: 20,
+          background: 'linear-gradient(145deg, #EFF6FF, #DBEAFE)',
+          border: '1px solid rgba(26,86,219,0.1)',
+          padding: '14px 14px',
+          boxShadow: '0 2px 10px rgba(26,86,219,0.08)',
+        }}
+      >
+        <p style={{ fontSize: 8.5, color: '#93C5FD', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: 6 }}>
+          Portfolio
+        </p>
+        <p style={{ fontSize: 17, fontWeight: 700, color: '#1A56DB', letterSpacing: '-0.3px', marginBottom: 2 }}>Excellent</p>
+        <p style={{ fontSize: 10.5, color: '#60A5FA', fontWeight: 500 }}>5 funds · All healthy</p>
+      </motion.div>
+
+      {/* Savings Opportunity */}
+      <motion.div
+        initial={{ opacity: 0, x: 10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.29 }}
+        style={{
+          borderRadius: 20,
+          background: 'linear-gradient(145deg, #F5F3FF, #EDE9FE)',
+          border: '1px solid rgba(124,58,237,0.1)',
+          padding: '14px 14px',
+          boxShadow: '0 2px 10px rgba(124,58,237,0.07)',
+        }}
+      >
+        <p style={{ fontSize: 8.5, color: '#C4B5FD', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: 6 }}>
+          Save Potential
+        </p>
+        <p style={{ fontSize: 17, fontWeight: 700, color: '#7C3AED', letterSpacing: '-0.3px', marginBottom: 2 }}>₹12K/mo</p>
+        <p style={{ fontSize: 10.5, color: '#A78BFA', fontWeight: 500 }}>Identified for you</p>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─── Suggestion Section ──────────────────────────────── */
+function SuggestionSection({ onSuggest }) {
+  return (
+    <div style={{ padding: '16px 16px 16px' }}>
+      <p style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: 10 }}>
+        Recommended Actions
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {SUGGESTIONS.slice(0, 6).map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <motion.button
+              key={s.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32 + i * 0.05 }}
+              whileHover={{ y: -3, boxShadow: '0 8px 26px rgba(15,23,42,0.12)' }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onSuggest(s.query)}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                padding: '13px 12px',
+                borderRadius: 18,
+                background: '#FFFFFF',
+                border: '1px solid rgba(15,23,42,0.07)',
+                boxShadow: '0 2px 8px rgba(15,23,42,0.05)',
+                cursor: 'pointer', textAlign: 'left',
+                transition: 'box-shadow 0.2s ease',
+              }}
+            >
+              <div style={{
+                width: 32, height: 32, borderRadius: 10,
+                background: s.iconBg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 9, flexShrink: 0,
+              }}>
+                <Icon style={{ width: 15, height: 15, color: s.iconColor }} />
+              </div>
+
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#0F172A', lineHeight: 1.3, marginBottom: 3, display: 'block' }}>
+                {s.label}
+              </span>
+              <span style={{ fontSize: 10.5, color: '#94A3B8', lineHeight: 1.4, marginBottom: 9, display: 'block' }}>
+                {s.description}
+              </span>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 9.5, fontWeight: 700, color: s.iconColor, background: s.iconBg, padding: '2px 7px', borderRadius: 5 }}>
+                  {s.impact}
+                </span>
+                <span style={{ fontSize: 9.5, color: '#CBD5E1', fontWeight: 500 }}>
+                  · {s.time}
+                </span>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Welcome content (hero + widgets + suggestions) ─── */
+function WelcomeContent({ customerName, onSuggest }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 0.98 }}
+      transition={{ duration: 0.25 }}
+    >
+      <HeroCard customerName={customerName} />
+      <FinancialWidgets />
+      <SuggestionSection onSuggest={onSuggest} />
+    </motion.div>
+  );
+}
+
+/* ─── Main CopilotPanel ───────────────────────────────── */
 export default function CopilotPanel({ customerName, userInitial }) {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [messages, setMessages]     = useState([]);
+  const [input, setInput]           = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [showTyping, setShowTyping] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError]           = useState(null);
+  const [inputFocused, setInputFocused] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
-  const streamingRef = useRef(false); // dedup guard
+  const inputRef       = useRef(null);
+  const streamingRef   = useRef(false);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, showTyping]);
+  useEffect(() => { scrollToBottom(); }, [messages, showTyping]);
 
   const sendMessage = useCallback(async (text) => {
     const trimmed = text.trim();
@@ -260,8 +454,6 @@ export default function CopilotPanel({ customerName, userInitial }) {
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
     setInput('');
-
-    // Show typing indicator briefly before stream starts
     setShowTyping(true);
 
     try {
@@ -284,7 +476,6 @@ export default function CopilotPanel({ customerName, userInitial }) {
           if (!raw) continue;
           try {
             const data = JSON.parse(raw);
-
             if (data.type === 'delta') {
               accumulated += data.text;
               setShowTyping(false);
@@ -321,7 +512,7 @@ export default function CopilotPanel({ customerName, userInitial }) {
       setShowTyping(false);
       const msg = err.message?.includes('401')
         ? 'Session expired. Please sign in again.'
-        : 'I\'m having trouble connecting right now. Please try again.';
+        : "I'm having trouble connecting right now. Please try again.";
       setMessages(prev => [...prev, { role: 'assistant', content: msg }]);
       setError(msg);
     } finally {
@@ -332,16 +523,10 @@ export default function CopilotPanel({ customerName, userInitial }) {
     }
   }, [messages, userInitial]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    sendMessage(input);
-  };
+  const handleSubmit = (e) => { e.preventDefault(); sendMessage(input); };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
   const handleReset = () => {
@@ -354,70 +539,96 @@ export default function CopilotPanel({ customerName, userInitial }) {
   const hasMessages = messages.length > 0;
 
   return (
-    <div
-      className="flex flex-col rounded-2xl overflow-hidden"
-      style={{
-        height: 'calc(100vh - 180px)',
-        minHeight: 500,
-        maxHeight: 820,
-        background: 'rgba(248,248,250,0.95)',
-        border: '1px solid rgba(0,0,0,0.08)',
-        boxShadow: '0 2px 24px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04)',
-        backdropFilter: 'blur(20px)',
-      }}
-    >
-      {/* ── Header ── */}
-      <div
-        className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-        style={{
-          background: 'rgba(255,255,255,0.8)',
-          borderBottom: '1px solid rgba(0,0,0,0.07)',
-          backdropFilter: 'blur(16px)',
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-[11px] flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, #1d1d1f 0%, #3730a3 100%)',
-              boxShadow: '0 2px 10px rgba(55,48,163,0.25)',
-            }}
-          >
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <p className="text-[14px] font-semibold" style={{ color: '#1d1d1f' }}>AI Banking Copilot</p>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" style={{ boxShadow: '0 0 4px rgba(16,185,129,0.6)' }} />
-              <p className="text-[11px]" style={{ color: '#8e8e93' }}>Powered by Gemini · Personalized for you</p>
+    <div style={{
+      height: 'calc(100vh - 180px)',
+      minHeight: 520, maxHeight: 860,
+      display: 'flex', flexDirection: 'column',
+      borderRadius: 24, overflow: 'hidden',
+      background: '#F7F8FC',
+      border: '1px solid rgba(15,23,42,0.08)',
+      boxShadow: '0 4px 24px rgba(15,23,42,0.06)',
+    }}>
+
+      {/* ── Compact identity bar ── */}
+      <div style={{
+        padding: '13px 18px',
+        background: '#FFFFFF',
+        borderBottom: '1px solid rgba(15,23,42,0.07)',
+        flexShrink: 0,
+        display: 'flex', alignItems: 'center', gap: 12,
+        position: 'relative', overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', top: -20, left: -20, width: 100, height: 100,
+          background: 'rgba(26,86,219,0.05)', filter: 'blur(28px)',
+          borderRadius: '50%', pointerEvents: 'none',
+        }} />
+
+        <AIAvatar size={42} />
+
+        <div style={{ flex: 1, position: 'relative', zIndex: 1 }}>
+          <p style={{ fontSize: 14.5, fontWeight: 700, color: '#0F172A', letterSpacing: '-0.3px', lineHeight: 1.2, marginBottom: 4 }}>
+            HyperOne Intelligence
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ position: 'relative', width: 7, height: 7, flexShrink: 0 }}>
+              <motion.div
+                animate={{ scale: [1, 2.3, 1], opacity: [0.45, 0, 0.45] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: '#10B981' }}
+              />
+              <div style={{ position: 'absolute', inset: 1, borderRadius: '50%', background: '#10B981' }} />
             </div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#10B981' }}>Online</span>
+            <span style={{ fontSize: 11, color: '#CBD5E1' }}>· Your personal financial strategist</span>
           </div>
         </div>
-        {hasMessages && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleReset}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-medium transition-colors"
-            style={{ color: '#6e6e73', background: 'rgba(0,0,0,0.05)' }}
-          >
-            <RotateCcw className="w-3 h-3" />
-            New chat
-          </motion.button>
-        )}
+
+        <AnimatePresence>
+          {hasMessages && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              whileHover={{ scale: 1.04, background: 'rgba(15,23,42,0.08)' }}
+              whileTap={{ scale: 0.96 }}
+              onClick={handleReset}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', borderRadius: 10,
+                background: 'rgba(15,23,42,0.05)',
+                border: 'none', cursor: 'pointer',
+                fontSize: 11.5, fontWeight: 500, color: '#64748B',
+                flexShrink: 0, position: 'relative', zIndex: 1,
+              }}
+            >
+              <RotateCcw style={{ width: 11, height: 11 }} />
+              New chat
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* ── Messages area ── */}
-      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4" style={{ scrollBehavior: 'smooth' }}>
+      {/* ── Main scrollable area ── */}
+      <div style={{
+        flex: 1, overflowY: 'auto',
+        display: 'flex', flexDirection: 'column',
+        ...(hasMessages ? { padding: '20px 18px', gap: 16 } : {}),
+        scrollBehavior: 'smooth',
+      }}>
         <AnimatePresence mode="wait">
           {!hasMessages ? (
-            <WelcomeState key="welcome" customerName={customerName} onSuggest={sendMessage} />
+            <WelcomeContent
+              key="welcome"
+              customerName={customerName}
+              onSuggest={sendMessage}
+            />
           ) : (
             <motion.div
               key="messages"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="space-y-4"
+              style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
             >
               {messages.map((msg, i) => (
                 <MessageBubble
@@ -435,26 +646,32 @@ export default function CopilotPanel({ customerName, userInitial }) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Suggestion chips (compact row, shown when messages exist) ── */}
+      {/* ── Quick chips (chat mode, after AI responds) ── */}
       {hasMessages && !isStreaming && (
         <motion.div
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
-          className="px-5 pb-2 flex gap-2 overflow-x-auto flex-shrink-0"
-          style={{ scrollbarWidth: 'none' }}
+          style={{
+            padding: '8px 18px 4px',
+            display: 'flex', gap: 8, overflowX: 'auto',
+            scrollbarWidth: 'none', flexShrink: 0,
+          }}
         >
           {SUGGESTIONS.slice(4).map(s => (
             <button
               key={s.label}
               onClick={() => sendMessage(s.query)}
-              className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-all"
               style={{
-                background: 'rgba(79,70,229,0.08)',
-                color: '#4f46e5',
-                border: '1px solid rgba(79,70,229,0.15)',
+                flexShrink: 0, padding: '6px 14px',
+                borderRadius: 20, fontSize: 12, fontWeight: 500,
+                whiteSpace: 'nowrap', cursor: 'pointer',
+                background: 'rgba(26,86,219,0.07)',
+                color: '#1A56DB',
+                border: '1px solid rgba(26,86,219,0.12)',
+                transition: 'background 0.15s ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(79,70,229,0.14)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(79,70,229,0.08)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,86,219,0.13)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(26,86,219,0.07)'; }}
             >
               {s.label}
             </button>
@@ -462,23 +679,46 @@ export default function CopilotPanel({ customerName, userInitial }) {
         </motion.div>
       )}
 
-      {/* ── Input bar ── */}
-      <div
-        className="px-4 py-4 flex-shrink-0"
-        style={{ background: 'rgba(255,255,255,0.8)', borderTop: '1px solid rgba(0,0,0,0.07)' }}
-      >
-        <form onSubmit={handleSubmit} className="flex items-end gap-3">
-          <div
-            className="flex-1 flex items-end rounded-2xl overflow-hidden"
-            style={{
-              background: 'rgba(0,0,0,0.04)',
-              border: '1px solid rgba(0,0,0,0.09)',
-              boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)',
-              transition: 'border-color 0.15s',
+      {/* ── Floating composer ── */}
+      <div style={{
+        padding: '10px 14px 14px',
+        background: '#FFFFFF',
+        borderTop: '1px solid rgba(15,23,42,0.07)',
+        flexShrink: 0,
+      }}>
+        <form onSubmit={handleSubmit}>
+          <motion.div
+            animate={{
+              boxShadow: inputFocused
+                ? '0 0 0 2.5px rgba(26,86,219,0.18), 0 6px 24px rgba(15,23,42,0.09)'
+                : '0 2px 12px rgba(15,23,42,0.07)',
+              borderColor: inputFocused
+                ? 'rgba(26,86,219,0.28)'
+                : 'rgba(15,23,42,0.09)',
             }}
-            onFocusCapture={e => { e.currentTarget.style.borderColor = 'rgba(79,70,229,0.4)'; }}
-            onBlurCapture={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.09)'; }}
+            transition={{ duration: 0.18 }}
+            style={{
+              display: 'flex', alignItems: 'flex-end', gap: 6,
+              background: '#F8FAFC',
+              border: '1.5px solid rgba(15,23,42,0.09)',
+              borderRadius: 28,
+              padding: '8px 8px 8px 14px',
+            }}
           >
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.12, color: '#1A56DB' }}
+              whileTap={{ scale: 0.88 }}
+              style={{
+                width: 30, height: 30, borderRadius: 10, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: '#CBD5E1', alignSelf: 'flex-end', marginBottom: 2,
+              }}
+            >
+              <Paperclip style={{ width: 15, height: 15 }} />
+            </motion.button>
+
             <textarea
               ref={inputRef}
               value={input}
@@ -488,67 +728,74 @@ export default function CopilotPanel({ customerName, userInitial }) {
                 e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about your portfolio, loans, investments…"
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              placeholder="Ask your AI banker anything..."
               rows={1}
               disabled={isStreaming}
-              className="flex-1 bg-transparent px-4 py-3 resize-none outline-none text-[14px]"
               style={{
-                color: '#1d1d1f',
-                lineHeight: 1.5,
-                maxHeight: 120,
-                minHeight: 44,
-                fontFamily: 'inherit',
+                flex: 1, background: 'transparent', border: 'none',
+                resize: 'none', outline: 'none',
+                fontSize: 14, color: '#0F172A', lineHeight: 1.55,
+                minHeight: 36, maxHeight: 120, fontFamily: 'inherit',
+                padding: '8px 0',
               }}
             />
-          </div>
 
-          <motion.button
-            type="submit"
-            disabled={!input.trim() || isStreaming}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-            className="w-11 h-11 rounded-[14px] flex items-center justify-center flex-shrink-0 transition-all"
-            style={{
-              background: input.trim() && !isStreaming
-                ? 'linear-gradient(135deg, #3730a3, #4f46e5)'
-                : 'rgba(0,0,0,0.08)',
-              boxShadow: input.trim() && !isStreaming
-                ? '0 3px 14px rgba(79,70,229,0.32)'
-                : 'none',
-            }}
-          >
-            {isStreaming ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                className="w-4 h-4 rounded-full border-2"
-                style={{ borderColor: 'rgba(0,0,0,0.2)', borderTopColor: '#4f46e5' }}
-              />
-            ) : (
-              <Send
-                className="w-4 h-4"
-                style={{ color: input.trim() ? '#fff' : '#aeaeb2' }}
-              />
-            )}
-          </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.12, color: '#1A56DB' }}
+              whileTap={{ scale: 0.88 }}
+              style={{
+                width: 30, height: 30, borderRadius: 10, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: '#CBD5E1', alignSelf: 'flex-end', marginBottom: 2,
+              }}
+            >
+              <Mic style={{ width: 15, height: 15 }} />
+            </motion.button>
+
+            <motion.button
+              type="submit"
+              disabled={!input.trim() || isStreaming}
+              whileHover={input.trim() && !isStreaming ? { scale: 1.08 } : {}}
+              whileTap={input.trim() && !isStreaming ? { scale: 0.92 } : {}}
+              style={{
+                width: 38, height: 38, borderRadius: 14, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: input.trim() && !isStreaming
+                  ? 'linear-gradient(135deg, #1556CB, #1A56DB)'
+                  : 'rgba(15,23,42,0.07)',
+                border: 'none',
+                cursor: input.trim() && !isStreaming ? 'pointer' : 'default',
+                boxShadow: input.trim() && !isStreaming
+                  ? '0 3px 14px rgba(26,86,219,0.32)' : 'none',
+                transition: 'background 0.2s ease, box-shadow 0.2s ease',
+                alignSelf: 'flex-end', marginBottom: 1,
+              }}
+            >
+              {isStreaming ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+                  style={{
+                    width: 14, height: 14, borderRadius: '50%',
+                    border: '2px solid rgba(15,23,42,0.15)',
+                    borderTopColor: '#1A56DB',
+                  }}
+                />
+              ) : (
+                <Send style={{ width: 15, height: 15, color: input.trim() ? '#fff' : '#CBD5E1' }} />
+              )}
+            </motion.button>
+          </motion.div>
         </form>
 
-        {/* Disclaimer */}
-        <p className="text-center text-[10.5px] mt-2.5" style={{ color: '#aeaeb2' }}>
+        <p style={{ textAlign: 'center', fontSize: 10.5, marginTop: 8, color: '#CBD5E1', lineHeight: 1.4 }}>
           AI responses are illustrative. Consult a certified advisor for financial decisions.
         </p>
       </div>
-
-      <style>{`
-        @keyframes copilot-cursor {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 0; }
-        }
-        @keyframes copilot-dot {
-          0%, 80%, 100% { transform: scale(1); opacity: 0.5; }
-          40% { transform: scale(1.3); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
