@@ -104,19 +104,20 @@ app.use(morgan(isProd ? 'combined' : 'dev'));
 app.use('/api/', noStore);
 
 // ─── Sanitization ─────────────────────────────────────────────────────────────
-// Recursively strip HTML/script tags from all string values in request body
-// before any route handler sees them.
+// Recursively strip HTML/script tags from all string values in the request body
+// before any route handler sees them — including values nested inside arrays
+// (e.g. the messages[] array sent to the onboarding chat endpoint).
 function sanitizeBody(req, res, next) {
   const strip = (v) => typeof v === 'string' ? v.replace(/<[^>]*>/g, '').trim() : v;
-  function deep(obj) {
-    if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
-      for (const k of Object.keys(obj)) {
-        obj[k] = typeof obj[k] === 'object' ? deep(obj[k]) : strip(obj[k]);
-      }
+  function deep(val) {
+    if (Array.isArray(val)) return val.map(deep);
+    if (val && typeof val === 'object') {
+      for (const k of Object.keys(val)) val[k] = deep(val[k]);
+      return val;
     }
-    return obj;
+    return strip(val);
   }
-  if (req.body) deep(req.body);
+  if (req.body) req.body = deep(req.body);
   next();
 }
 

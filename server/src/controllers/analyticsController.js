@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import OnboardingRecord from '../models/OnboardingRecord.js';
 
 export async function getDashboardStats(req, res, next) {
@@ -130,6 +131,10 @@ export async function updateKycStatus(req, res, next) {
     const { id } = req.params;
     const { action } = req.body; // 'approve' | 'reject'
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid resource identifier.' });
+    }
+
     const record = await OnboardingRecord.findById(id);
     if (!record) {
       return res.status(404).json({ success: false, error: 'Customer not found.' });
@@ -146,6 +151,14 @@ export async function updateKycStatus(req, res, next) {
     } else {
       return res.status(400).json({ success: false, error: 'Action must be approve or reject.' });
     }
+
+    // Append immutable audit entry for traceability
+    record.auditLog.push({
+      action,
+      performedAt: new Date(),
+      adminJti: req.admin?.jti || 'unknown',
+      ip: req.socket?.remoteAddress || req.ip || 'unknown',
+    });
 
     await record.save();
     res.json({ success: true, data: record });

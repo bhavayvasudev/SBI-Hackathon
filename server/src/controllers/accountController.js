@@ -20,6 +20,13 @@ function generateMpin() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// Store only a masked PAN — first 2 chars + 7 X's + last char (e.g. ABXXXXXXXA).
+// The full PAN is never persisted; only the OCR result shown to the user at onboarding time contains it.
+function maskPan(pan) {
+  if (!pan || pan.length < 3) return pan;
+  return pan.slice(0, 2) + 'XXXXXXX' + pan.slice(-1);
+}
+
 export async function createAccount(req, res, next) {
   try {
     const { profile, sessionId, kycData, onboardingTime } = req.body;
@@ -41,7 +48,7 @@ export async function createAccount(req, res, next) {
       kycDocuments: {
         panVerified: !!(kycData?.panNumber),
         aadhaarVerified: !!(kycData?.aadhaarNumber),
-        panNumber: kycData?.panNumber || null,
+        panNumber: kycData?.panNumber ? maskPan(kycData.panNumber) : null,
         panName: kycData?.panName || null,
         panDob: kycData?.panDob || null,
         panUploadDate: kycData?.panNumber ? new Date() : null,

@@ -53,3 +53,14 @@ export const createAccountSchema = z.object({
 export const kycActionSchema = z.object({
   action: z.enum(['approve', 'reject']),
 });
+
+export const recommendationSchema = z.object({
+  profile: z.object({
+    name:       safeStr(100).optional(),
+    age:        z.number().int().min(1).max(120).optional(),
+    occupation: safeStr(100).optional(),
+    income:     z.enum(['Below ₹25,000', '₹25K–₹50K', '₹50K–₹1 Lakh', 'Above ₹1 Lakh']).optional(),
+    goals:      safeStr(300).optional(),
+    category:   z.enum(['student', 'salaried', 'business']).optional(),
+  }).strict(),
+});

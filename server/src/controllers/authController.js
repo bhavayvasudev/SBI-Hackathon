@@ -1,10 +1,22 @@
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import Customer from '../models/Customer.js';
 import OnboardingRecord from '../models/OnboardingRecord.js';
 import { JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRES_IN, ADMIN_JWT_EXPIRES_IN } from '../config/jwt.js';
 import { addToDenylist } from '../middleware/security.js';
+
+// Prevent timing-oracle attacks on admin credential checks.
+function timingSafeEqual(a, b) {
+  const aBuf = Buffer.from(String(a));
+  const bBuf = Buffer.from(String(b));
+  if (aBuf.length !== bBuf.length) {
+    crypto.timingSafeEqual(aBuf, Buffer.alloc(aBuf.length));
+    return false;
+  }
+  return crypto.timingSafeEqual(aBuf, bBuf);
+}
 
 // These are validated at startup in server.js — they will always be set here.
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
@@ -94,7 +106,7 @@ export async function loginAdmin(req, res, next) {
   try {
     const { username, password } = req.body;
 
-    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    if (!timingSafeEqual(username, ADMIN_USERNAME) || !timingSafeEqual(password, ADMIN_PASSWORD)) {
       return res.status(401).json({ success: false, error: 'Invalid credentials.' });
     }
 

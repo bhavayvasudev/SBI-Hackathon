@@ -6,7 +6,7 @@ import { seedAnalytics } from './src/data/seed.js';
 // ─── Startup environment validation ───────────────────────────────────────────
 // Fail fast with a clear error rather than silently running with missing/weak config.
 (function validateEnv() {
-  const required = ['JWT_SECRET', 'MONGODB_URI', 'GEMINI_API_KEY', 'ADMIN_USERNAME', 'ADMIN_PASSWORD'];
+  const required = ['JWT_SECRET', 'MONGODB_URI', 'GEMINI_API_KEY', 'ADMIN_USERNAME', 'ADMIN_PASSWORD', 'CLIENT_URL'];
   const missing = required.filter(k => !process.env[k]);
   if (missing.length) {
     console.error(`[startup] Missing required environment variables: ${missing.join(', ')}`);

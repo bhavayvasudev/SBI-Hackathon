@@ -82,6 +82,18 @@ function buildFinancialSummary(customerId, category) {
   };
 }
 
+// Sanitize user-controlled profile strings before interpolating them into the AI system prompt.
+// Strips ASCII control characters and common prompt-injection keyword patterns.
+function sanitizeForPrompt(str, maxLen = 100) {
+  if (str == null) return '—';
+  return String(str)
+    .replace(/[\x00-\x1F\x7F]/g, ' ')
+    .replace(/(-{3,}|={3,}|\*{3,}|#{3,})/g, '')
+    .replace(/(ignore|forget|disregard|override|pretend|jailbreak|system prompt)/gi, '[filtered]')
+    .slice(0, maxLen)
+    .trim() || '—';
+}
+
 function buildSystemPrompt(customerData) {
   const {
     customerId, accountNumber, ifscCode, branchName,
@@ -108,18 +120,22 @@ function buildSystemPrompt(customerData) {
   const maxSection80C = Math.min(150000, annual);
   const loanEligibility = Math.round(incomeNum * 60); // rough 60x monthly income
 
+  const safeName       = sanitizeForPrompt(profile?.name, 80);
+  const safeOccupation = sanitizeForPrompt(profile?.occupation, 80);
+  const safeGoals      = sanitizeForPrompt(profile?.goals, 200);
+
   return `You are HyperOne AI Copilot — a personal banking and financial intelligence assistant embedded inside HyperOne's customer dashboard (SBI's AI-powered digital banking platform).
 
-You are talking to ${profile?.name || 'the customer'} right now.
+You are talking to ${safeName} right now.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CUSTOMER PROFILE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Name: ${profile?.name || 'Customer'}
+Name: ${safeName}
 Age: ${profile?.age || '—'}
-Occupation: ${profile?.occupation || '—'}
+Occupation: ${safeOccupation}
 Monthly Income: ${profile?.income || '—'} (≈ ₹${incomeNum.toLocaleString('en-IN')}/month)
-Financial Goals: ${profile?.goals || '—'}
+Financial Goals: ${safeGoals}
 Customer Category: ${cat}
 Customer ID: ${customerId}
 Account Number: ${accountNumber}

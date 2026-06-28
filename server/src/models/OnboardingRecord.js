@@ -37,6 +37,12 @@ const onboardingSchema = new mongoose.Schema({
   },
   onboardingTime: { type: Number },
   completedAt: { type: Date, default: Date.now },
+  auditLog: [{
+    action:      { type: String, enum: ['approve', 'reject'] },
+    performedAt: { type: Date,   default: Date.now },
+    adminJti:    String,
+    ip:          String,
+  }],
 }, { timestamps: true });
 
 export default mongoose.model('OnboardingRecord', onboardingSchema);
