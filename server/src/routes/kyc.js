@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { uploadAndProcessKYC } from '../controllers/kycController.js';
+import { requireCustomerAuth } from '../middleware/authMiddleware.js';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ function handleUpload(req, res, next) {
   });
 }
 
-// POST /api/kyc/upload — receives raw image, runs server-side OCR, returns parsed document data
-router.post('/upload', handleUpload, uploadAndProcessKYC);
+// POST /api/kyc/upload — requires customer auth to prevent anonymous OCR abuse
+router.post('/upload', requireCustomerAuth, handleUpload, uploadAndProcessKYC);
 
 export default router;

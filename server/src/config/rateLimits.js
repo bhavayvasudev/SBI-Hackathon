@@ -5,11 +5,17 @@ const msg = (text) => ({ success: false, error: text });
 const GENERIC_THROTTLE = msg('Too many requests. Please try again later.');
 const AUTH_THROTTLE    = msg('Too many requests. Please try again later.');
 
+// ─── IP key generator ─────────────────────────────────────────────────────────
+// Always key on the real TCP socket address so a spoofed X-Forwarded-For header
+// cannot be used to bypass rate limits, regardless of the trust-proxy setting.
+const realIp = (req) => req.socket.remoteAddress || req.ip || 'unknown';
+
 // ─── Global baseline ──────────────────────────────────────────────────────────
 // 200 requests per 15 minutes across all /api/ endpoints
 export const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
+  keyGenerator: realIp,
   standardHeaders: true,
   legacyHeaders: false,
   message: GENERIC_THROTTLE,
@@ -21,6 +27,7 @@ export const globalLimiter = rateLimit({
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
+  keyGenerator: realIp,
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
@@ -32,6 +39,7 @@ export const loginLimiter = rateLimit({
 export const registerLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
+  keyGenerator: realIp,
   standardHeaders: true,
   legacyHeaders: false,
   message: GENERIC_THROTTLE,
@@ -42,6 +50,7 @@ export const registerLimiter = rateLimit({
 export const chatLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
+  keyGenerator: realIp,
   standardHeaders: true,
   legacyHeaders: false,
   message: GENERIC_THROTTLE,
@@ -52,6 +61,7 @@ export const chatLimiter = rateLimit({
 export const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
+  keyGenerator: realIp,
   standardHeaders: true,
   legacyHeaders: false,
   message: GENERIC_THROTTLE,

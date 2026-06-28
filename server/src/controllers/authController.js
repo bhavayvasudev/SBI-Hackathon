@@ -6,8 +6,9 @@ import OnboardingRecord from '../models/OnboardingRecord.js';
 import { JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRES_IN, ADMIN_JWT_EXPIRES_IN } from '../config/jwt.js';
 import { addToDenylist } from '../middleware/security.js';
 
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+// These are validated at startup in server.js — they will always be set here.
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 export async function loginCustomer(req, res, next) {
   try {

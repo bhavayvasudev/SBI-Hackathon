@@ -23,9 +23,12 @@ const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 
 // ─── Trust proxy ──────────────────────────────────────────────────────────────
-// Needed so req.ip reflects the real client IP behind Nginx / Vite dev proxy,
-// which is required for rate limiting and security logging to work correctly.
-app.set('trust proxy', 1);
+// Only enable when explicitly deployed behind a known reverse proxy (e.g. Nginx).
+// Without this guard an attacker could spoof X-Forwarded-For to bypass rate limits.
+// Rate limiters use req.socket.remoteAddress as the key regardless of this setting.
+if (process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', 1);
+}
 
 // ─── Remove X-Powered-By ─────────────────────────────────────────────────────
 // Belt-and-suspenders: Helmet's hidePoweredBy already strips this; explicit

@@ -8,7 +8,7 @@ import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import {
   ArrowRight, Zap, Shield, BarChart3, Brain, Sparkles,
   ChevronDown, X, Lock, User, TrendingUp, CheckCircle,
-  ArrowUpRight, Activity, Globe, Target,
+  ArrowUpRight, Activity, Globe, Target, Copy,
 } from 'lucide-react';
 import { loginCustomer, loginAdmin } from '../lib/api.js';
 import useAuthStore from '../store/authStore.js';
@@ -265,6 +265,14 @@ function AdminSignInModal({ onClose, navigate }) {
   const [error, setError] = useState('');
   const [step, setStep] = useState('form');
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(null);
+
+  const copyField = (text, field) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(field);
+      setTimeout(() => setCopied(null), 1600);
+    }).catch(() => {});
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -290,7 +298,7 @@ function AdminSignInModal({ onClose, navigate }) {
         exit={{ opacity: 0, scale: 0.92, y: 16 }}
         transition={{ type: 'spring', stiffness: 380, damping: 30 }}
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-[400px] rounded-[28px] overflow-hidden"
+        className="w-full max-w-[420px] rounded-[28px] overflow-hidden"
         style={{ background: '#fff', boxShadow: '0 40px 100px rgba(0,0,0,0.22), 0 8px 32px rgba(0,0,0,0.1)' }}>
         {step === 'form' ? (
           <>
@@ -310,10 +318,10 @@ function AdminSignInModal({ onClose, navigate }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="px-8 py-6 space-y-4">
+            <form onSubmit={handleSubmit} className="px-8 pt-6 pb-5 space-y-4">
               <PremiumInput label="Username" value={form.username}
                 onChange={e => { setForm(f => ({ ...f, username: e.target.value })); setError(''); }}
-                placeholder="admin" />
+                placeholder="Enter username" />
               <PremiumInput label="Password" type="password" value={form.password}
                 onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setError(''); }}
                 placeholder="••••••••" />
@@ -324,9 +332,6 @@ function AdminSignInModal({ onClose, navigate }) {
                   {error}
                 </motion.p>
               )}
-              <p className="text-xs px-3 py-2 rounded-lg" style={{ color: T.muted, background: '#F9FAFB', border: `1px solid ${T.border}` }}>
-                Demo: <span className="font-mono font-semibold" style={{ color: T.ink }}>admin</span> / <span className="font-mono font-semibold" style={{ color: T.ink }}>admin123</span>
-              </p>
               <motion.button whileHover={{ scale: loading ? 1 : 1.01 }} whileTap={{ scale: loading ? 1 : 0.99 }}
                 type="submit"
                 disabled={loading}
@@ -335,6 +340,84 @@ function AdminSignInModal({ onClose, navigate }) {
                 {loading ? 'Authenticating…' : 'Access Dashboard →'}
               </motion.button>
             </form>
+
+            {/* ── Demo Access Card ── */}
+            <div className="mx-5 mb-7 rounded-2xl overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.07) 0%, rgba(30,58,138,0.07) 100%)',
+                border: '1px solid rgba(245,158,11,0.28)',
+                boxShadow: '0 4px 20px rgba(245,158,11,0.08)',
+              }}>
+              {/* Card header */}
+              <div className="flex items-center gap-2.5 px-5 pt-4 pb-3"
+                style={{ borderBottom: '1px solid rgba(245,158,11,0.14)' }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(245,158,11,0.14)', border: '1px solid rgba(245,158,11,0.28)' }}>
+                  <Lock className="w-3.5 h-3.5" style={{ color: '#b45309' }} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold" style={{ color: '#92400e' }}>Demo Access</p>
+                  <p className="text-[10px]" style={{ color: '#d97706' }}>Hackathon Evaluation Credentials</p>
+                </div>
+              </div>
+
+              {/* Credentials */}
+              <div className="px-5 py-3 space-y-3">
+                {/* Username row */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: '#94a3b8' }}>Username</p>
+                    <p className="font-mono text-sm font-semibold" style={{ color: T.ink }}>hyperone_admin</p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.94 }}
+                    onClick={() => copyField('hyperone_admin', 'username')}
+                    title="Copy username"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                    style={{
+                      background: copied === 'username' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                      border: `1px solid ${copied === 'username' ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.2)'}`,
+                      color: copied === 'username' ? '#059669' : '#d97706',
+                    }}>
+                    {copied === 'username'
+                      ? <><CheckCircle className="w-3 h-3" /> Copied</>
+                      : <><Copy className="w-3 h-3" /> Copy</>}
+                  </motion.button>
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: '1px', background: 'rgba(245,158,11,0.1)' }} />
+
+                {/* Password row */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide mb-0.5" style={{ color: '#94a3b8' }}>Password</p>
+                    <p className="font-mono text-sm font-semibold" style={{ color: T.ink }}>HyperOne@2026Demo</p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.94 }}
+                    onClick={() => copyField('HyperOne@2026Demo', 'password')}
+                    title="Copy password"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-colors"
+                    style={{
+                      background: copied === 'password' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                      border: `1px solid ${copied === 'password' ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.2)'}`,
+                      color: copied === 'password' ? '#059669' : '#d97706',
+                    }}>
+                    {copied === 'password'
+                      ? <><CheckCircle className="w-3 h-3" /> Copied</>
+                      : <><Copy className="w-3 h-3" /> Copy</>}
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Disclaimer */}
+              <div className="px-5 pb-4">
+                <p className="text-[10px] leading-relaxed" style={{ color: '#94a3b8' }}>
+                  These credentials are provided exclusively for hackathon evaluation purposes.
+                </p>
+              </div>
+            </div>
           </>
         ) : (
           <div className="px-8 py-12 text-center">

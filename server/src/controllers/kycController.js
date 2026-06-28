@@ -60,7 +60,6 @@ export async function uploadAndProcessKYC(req, res, next) {
         data: {
           documentType: 'Aadhaar Card',
           aadhaarNumber: masked,
-          aadhaarRaw: rawAadhaar,
           name: nameMatch ? nameMatch[1].trim() : null,
           dob: dobMatch ? dobMatch[1] : null,
           gender: genderMatch ? genderMatch[1].toUpperCase() : null,

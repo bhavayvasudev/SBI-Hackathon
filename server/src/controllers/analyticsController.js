@@ -73,11 +73,13 @@ export async function getCustomers(req, res, next) {
     const query = {};
 
     if (search.trim()) {
+      // Escape all regex meta-characters to prevent ReDoS / regex injection.
+      const escaped = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
-        { 'profile.name': { $regex: search.trim(), $options: 'i' } },
-        { customerId: { $regex: search.trim(), $options: 'i' } },
-        { accountNumber: { $regex: search.trim(), $options: 'i' } },
-        { 'kycDocuments.panNumber': { $regex: search.trim(), $options: 'i' } },
+        { 'profile.name': { $regex: escaped, $options: 'i' } },
+        { customerId: { $regex: escaped, $options: 'i' } },
+        { accountNumber: { $regex: escaped, $options: 'i' } },
+        { 'kycDocuments.panNumber': { $regex: escaped, $options: 'i' } },
       ];
     }
 
